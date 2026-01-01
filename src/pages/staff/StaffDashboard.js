@@ -3,6 +3,7 @@ import '../staff/StaffDashboard.css';
 import 'antd/dist/reset.css';
 import Announcements from '../announcements/Announcements';
 import NewsEvents from '../newsevents/NewsEvents';
+import Faculties from '../faculties/Faculties';
 import {
   DashboardOutlined,
   UserOutlined,
@@ -287,9 +288,13 @@ export default function StaffDashboard({ onLogout }) {
                 <a href="/" className="portal-link">
                   <AppstoreOutlined className="portal-icon" /> Programs
                 </a>
-                <a href="/" className="portal-link">
+                <button 
+                  className="portal-link"
+                  onClick={() => setActiveTab('faculties')}
+                  style={{ border: 'none', background: 'none', cursor: 'pointer', width: '100%', textAlign: 'left', padding: '12px 20px' }}
+                >
                   <TeamOutlined className="portal-icon" /> Faculties
-                </a>
+                </button>
                 <a href="/" className="portal-link">
                   <CrownOutlined className="portal-icon" /> Leaderships & Directorates
                 </a>
@@ -474,6 +479,12 @@ export default function StaffDashboard({ onLogout }) {
           {activeTab === 'news-events' && (
             <div className="tab-content news-events-tab">
               <NewsEvents />
+            </div>
+          )}
+
+          {activeTab === 'faculties' && (
+            <div className="tab-content faculties-tab">
+              <Faculties />
             </div>
           )}
         </div>

@@ -2,8 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { CalendarOutlined, EnvironmentOutlined, ArrowRightOutlined } from '@ant-design/icons';
 import '../styles/NewsEventsPreview.css';
+import useScrollAnimation from '../hooks/useScrollAnimation';
 
 export default function NewsEventsPreview() {
+  const sectionRef = useScrollAnimation();
   const [newsEvents, setNewsEvents] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -34,7 +36,7 @@ export default function NewsEventsPreview() {
   }
 
   return (
-    <section className="news-events-preview-section">
+    <section className="news-events-preview-section" ref={sectionRef}>
       <div className="section-wrapper">
         <div className="section-header">
           <h2>News & Events</h2>

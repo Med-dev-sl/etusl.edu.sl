@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import './Header.css';
 
 function Header({ onNavigate }) {
@@ -39,7 +40,7 @@ function Header({ onNavigate }) {
           <div className="container">
             <ul className="nav-menu">
               <li><a href="#" onClick={(e) => { e.preventDefault(); handleNavClick('home'); }}>Home</a></li>
-              <li><a href="#about">About</a></li>
+              <li><Link to="/about">About</Link></li>
               <li><a href="#programs">Programs</a></li>
               <li><a href="#admissions">Admissions</a></li>
               <li><a href="#students">Student Life</a></li>

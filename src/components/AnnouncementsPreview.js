@@ -2,8 +2,10 @@ import React, { useEffect, useState } from 'react';
 import '../styles/AnnouncementsPreview.css';
 import { BellOutlined, ArrowRightOutlined } from '@ant-design/icons';
 import { Link } from 'react-router-dom';
+import useScrollAnimation from '../hooks/useScrollAnimation';
 
 export default function AnnouncementsPreview() {
+  const sectionRef = useScrollAnimation();
   const [announcements, setAnnouncements] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -45,9 +47,8 @@ export default function AnnouncementsPreview() {
     };
     return colors[category] || '#0056b3';
   };
-
   return (
-    <section className="announcements-preview-section">
+    <section className="announcements-preview-section" ref={sectionRef}>
       <div className="announcements-preview-container">
         {/* Header */}
         <div className="announcements-preview-header">

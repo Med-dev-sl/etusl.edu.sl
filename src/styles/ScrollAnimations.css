@@ -1,0 +1,241 @@
+/**
+ * Global Scroll Animation Styles
+ * Animations triggered when elements come into view during scroll
+ */
+
+/* Section-level scroll animations */
+.scroll-animated {
+  animation: scrollFadeInUp 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards !important;
+}
+
+/* Card animations - staggered */
+.scroll-animated-card {
+  animation: scrollSlideInUp 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+.scroll-animated-card:nth-child(1) {
+  animation-delay: 0.1s;
+}
+
+.scroll-animated-card:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.scroll-animated-card:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+.scroll-animated-card:nth-child(n+4) {
+  animation-delay: calc((var(--card-index, 0) + 1) * 0.1s);
+}
+
+/* ===== KEYFRAME ANIMATIONS ===== */
+
+/**
+ * scrollFadeInUp: Section fade-in with upward slide
+ * Used for section containers
+ */
+@keyframes scrollFadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/**
+ * scrollSlideInUp: Card slide-up animation
+ * Used for individual cards and items
+ */
+@keyframes scrollSlideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/**
+ * scrollSlideInLeft: Item slide from left
+ * Used for images and left-aligned content
+ */
+@keyframes scrollSlideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/**
+ * scrollSlideInRight: Item slide from right
+ * Used for text and right-aligned content
+ */
+@keyframes scrollSlideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/**
+ * scrollZoomIn: Scale animation on scroll
+ * Used for emphasis on specific elements
+ */
+@keyframes scrollZoomIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ===== SCROLL ANIMATION VARIANTS ===== */
+
+/* Fade only (no slide) */
+.scroll-fade-in {
+  animation: scrollFadeOnly 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards !important;
+}
+
+@keyframes scrollFadeOnly {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Slide from left with fade */
+.scroll-slide-left {
+  animation: scrollSlideInLeft 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards !important;
+}
+
+/* Slide from right with fade */
+.scroll-slide-right {
+  animation: scrollSlideInRight 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards !important;
+}
+
+/* Scale/Zoom in with fade */
+.scroll-zoom-in {
+  animation: scrollZoomIn 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards !important;
+}
+
+/* ===== STATE BEFORE ANIMATION ===== */
+
+/* Ensure elements are hidden before scroll animation triggers */
+.scroll-animation-pending {
+  opacity: 0;
+  transform: translateY(40px);
+}
+
+/* ===== ENHANCED HOVER EFFECTS FOR SCROLLED ELEMENTS ===== */
+
+.scroll-animated {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.scroll-animated:hover {
+  transform: translateY(-4px);
+}
+
+/* ===== SCROLL ANIMATION FOR SPECIFIC SECTIONS ===== */
+
+.about-preview-section.scroll-animated {
+  animation: scrollFadeInUp 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+.faculties-preview-section.scroll-animated {
+  animation: scrollFadeInUp 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+.announcements-preview-section.scroll-animated {
+  animation: scrollFadeInUp 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+.news-events-preview-section.scroll-animated {
+  animation: scrollFadeInUp 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+/* ===== CARD SCROLL ANIMATIONS ===== */
+
+.announcement-preview-card.scroll-animated,
+.faculty-preview-card.scroll-animated,
+.news-event-preview-card.scroll-animated {
+  animation: scrollSlideInUp 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+/* Stagger effect for cards using nth-child */
+.scroll-animated-cards-container .announcement-preview-card.scroll-animated,
+.scroll-animated-cards-container .faculty-preview-card.scroll-animated,
+.scroll-animated-cards-container .news-event-preview-card.scroll-animated {
+  animation: scrollSlideInUp 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+.scroll-animated-cards-container .announcement-preview-card:nth-child(1).scroll-animated {
+  animation-delay: 0.1s;
+}
+
+.scroll-animated-cards-container .announcement-preview-card:nth-child(2).scroll-animated {
+  animation-delay: 0.2s;
+}
+
+.scroll-animated-cards-container .announcement-preview-card:nth-child(3).scroll-animated {
+  animation-delay: 0.3s;
+}
+
+.scroll-animated-cards-container .faculty-preview-card:nth-child(1).scroll-animated {
+  animation-delay: 0.1s;
+}
+
+.scroll-animated-cards-container .faculty-preview-card:nth-child(2).scroll-animated {
+  animation-delay: 0.2s;
+}
+
+.scroll-animated-cards-container .faculty-preview-card:nth-child(3).scroll-animated {
+  animation-delay: 0.3s;
+}
+
+.scroll-animated-cards-container .news-event-preview-card:nth-child(1).scroll-animated {
+  animation-delay: 0.1s;
+}
+
+.scroll-animated-cards-container .news-event-preview-card:nth-child(2).scroll-animated {
+  animation-delay: 0.2s;
+}
+
+.scroll-animated-cards-container .news-event-preview-card:nth-child(3).scroll-animated {
+  animation-delay: 0.3s;
+}
+
+/* ===== PERFORMANCE OPTIMIZATION ===== */
+
+/* Use will-change for animated elements (but not excessively) */
+.scroll-animated {
+  will-change: transform, opacity;
+}
+
+.scroll-animated-card {
+  will-change: transform, opacity;
+}
+
+/* Restore after animation */
+.scroll-animated[style*="animation: none"] {
+  will-change: auto;
+}

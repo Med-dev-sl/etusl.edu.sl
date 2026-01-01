@@ -1,19 +1,23 @@
 import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import './App.css';
+import './styles/ScrollAnimations.css';
 import Header from './components/Header';
 import Hero from './components/Hero';
 import AboutPreview from './components/AboutPreview';
 import AnnouncementsPreview from './components/AnnouncementsPreview';
 import NewsEventsPreview from './components/NewsEventsPreview';
+import FacultiesPreview from './components/FacultiesPreview';
 import Dashboard from './pages/admin/Dashboard';
 import UserManagement from './pages/admin/UserManagement';
 import Login from './pages/admin/login';
 import StudentLogin from './pages/StudentLogin';
 import StaffLogin from './pages/StaffLogin';
+import About from './pages/about/About';
 import StaffDashboard from './pages/staff/StaffDashboard';
 import Announcements from './pages/announcements/Announcements';
 import NewsEvents from './pages/newsevents/NewsEvents';
+import Faculties from './pages/faculties/Faculties';
 import Jobs from './pages/Jobs';
 import AssetsRegister from './pages/AssetsRegister';
 
@@ -52,7 +56,7 @@ function App() {
           element={staffLoggedIn ? <StaffDashboard onLogout={handleStaffLogout} /> : <StaffLogin />} 
         />
         <Route path="/announcements" element={<Announcements />} />
-        <Route path="/news-events" element={<NewsEvents />} />
+        <Route path="/news-events" element={<NewsEvents />} />        <Route path="/faculties" element={<Faculties />} />        <Route path="/about" element={<About />} />
         <Route path="/jobs" element={<Jobs />} />
         <Route path="/assets" element={<AssetsRegister />} />
 
@@ -100,6 +104,7 @@ function HomePage({ setCurrentPage }) {
     <div className="home-page">
       <Hero />
       <AboutPreview />
+      <FacultiesPreview />
       <AnnouncementsPreview />
       <NewsEventsPreview />
     </div>

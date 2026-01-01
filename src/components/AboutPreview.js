@@ -1,9 +1,12 @@
 import React from 'react';
 import '../styles/AboutPreview.css';
+import useScrollAnimation from '../hooks/useScrollAnimation';
 
 export default function AboutPreview() {
+  const sectionRef = useScrollAnimation();
+
   return (
-    <section className="about-preview-section">
+    <section className="about-preview-section" ref={sectionRef}>
       <div className="about-preview-container">
         {/* Left - Image */}
         <div className="about-image-wrapper">

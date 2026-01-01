@@ -3,6 +3,7 @@
   background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
   position: relative;
   overflow: hidden;
+  animation: slideDown 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 .about-preview-container {
@@ -290,5 +291,17 @@
     height: 150px;
     top: -20px;
     right: -20px;
+  }
+}
+
+/* Animation Keyframes */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
