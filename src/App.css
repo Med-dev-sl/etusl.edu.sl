@@ -1,38 +1,181 @@
+@import url('https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=Lora:wght@400;600&display=swap');
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #fafafa;
+}
+
 .App {
-  text-align: center;
-}
-
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
-}
-
-.App-header {
-  background-color: #282c34;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
+  background-color: #ffffff;
+}
+
+.main-content {
+  flex: 1;
+  padding-top: 0;
+}
+
+/* Home Page Styles */
+.home-page {
+  background-color: #fafafa;
+}
+
+.hero {
+  background: linear-gradient(135deg, #A51C30 0%, #8B1538 100%);
   color: white;
+  padding: 80px 20px;
+  text-align: center;
 }
 
-.App-link {
-  color: #61dafb;
+.hero-content h1 {
+  font-family: 'Crimson Text', serif;
+  font-size: 68px;
+  margin: 0;
+  letter-spacing: 2px;
+  font-weight: 600;
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
+.hero-content p {
+  font-family: 'Lora', serif;
+  font-size: 28px;
+  margin-top: 10px;
+  font-style: italic;
+  opacity: 0.95;
+}
+
+.content-section {
+  max-width: 800px;
+  margin: 50px auto;
+  padding: 40px;
+  background: white;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.content-section h2 {
+  font-family: 'Crimson Text', serif;
+  font-size: 44px;
+  color: #A51C30;
+  margin-top: 0;
+  letter-spacing: 1px;
+}
+
+.content-section p {
+  font-family: 'Lora', serif;
+  font-size: 18px;
+  line-height: 1.8;
+  color: #333;
+}
+
+/* Quick Links Section */
+.quick-links {
+  max-width: 1000px;
+  margin: 50px auto;
+  padding: 40px;
+  background: white;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.quick-links h2 {
+  font-family: 'Crimson Text', serif;
+  font-size: 44px;
+  color: #A51C30;
+  margin-top: 0;
+  letter-spacing: 1px;
+  text-align: center;
+}
+
+.links-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 25px;
+  margin-top: 30px;
+}
+
+.link-card {
+  background: linear-gradient(135deg, #0056b3 0%, #003d82 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 30px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.link-card:hover {
+  transform: translateY(-10px) scale(1.02);
+  box-shadow: 0 12px 24px rgba(0, 86, 179, 0.4);
+}
+
+.link-card h3 {
+  font-family: 'Crimson Text', serif;
+  font-size: 28px;
+  margin-top: 0;
+  margin-bottom: 10px;
+}
+
+.link-card p {
+  font-family: 'Lora', serif;
+  font-size: 16px;
+  margin: 0;
+  opacity: 0.95;
+}
+
+/* Footer */
+.footer {
+  background: linear-gradient(135deg, #333333 0%, #1a1a1a 100%);
+  color: white;
+  text-align: center;
+  padding: 30px 20px;
+  margin-top: 50px;
+  font-family: 'Lora', serif;
+}
+
+.footer p {
+  margin: 0;
+  opacity: 0.9;
+  font-size: 14px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .hero-content h1 {
+    font-size: 40px;
   }
-  to {
-    transform: rotate(360deg);
+
+  .hero-content p {
+    font-size: 18px;
+  }
+
+  .content-section {
+    margin: 30px 20px;
+    padding: 25px;
+  }
+
+  .content-section h2 {
+    font-size: 28px;
+  }
+
+  .quick-links {
+    margin: 30px 20px;
+    padding: 25px;
+  }
+
+  .quick-links h2 {
+    font-size: 28px;
+  }
+
+  .links-grid {
+    grid-template-columns: 1fr;
   }
 }
