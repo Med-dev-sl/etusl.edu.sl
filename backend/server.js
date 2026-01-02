@@ -631,7 +631,191 @@ app.delete('/api/faculties/:id', async (req, res) => {
   }
 });
 
+// ===== ABOUT CONTENT API =====
+// Get mission & vision
+app.get('/api/about', async (req, res) => {
+  try {
+    const rows = await query('SELECT mission, vision, updated_at FROM about WHERE id = 1');
+    if (rows.length === 0) {
+      return res.json({ mission: '', vision: '' });
+    }
+    res.json({ mission: rows[0].mission, vision: rows[0].vision, updated_at: rows[0].updated_at });
+  } catch (err) {
+    console.error('Error fetching about content:', err);
+    res.status(500).json({ error: 'Database error', detail: err.message });
+  }
+});
+
+// Update mission & vision (requires authenticated staff in production)
+app.put('/api/about', async (req, res) => {
+  const { mission, vision } = req.body;
+  if (mission == null || vision == null) return res.status(400).json({ error: 'mission and vision required' });
+  try {
+    // Upsert row with id=1
+    await query('INSERT INTO about (id, mission, vision) VALUES (1, ?, ?) ON DUPLICATE KEY UPDATE mission = VALUES(mission), vision = VALUES(vision)', [mission, vision]);
+    res.json({ message: 'About content updated' });
+  } catch (err) {
+    console.error('Error updating about content:', err);
+    res.status(500).json({ error: 'Database error', detail: err.message });
+  }
+});
+
 const port = process.env.PORT || 4000;
 app.listen(port, () => {
   console.log(`Backend running on port ${port}`);
+});
+
+// ===== MISSION & VISION API (CRUD + toggle active) =====
+// List all mission/vision entries
+app.get('/api/mission-vision', async (req, res) => {
+  try {
+    const rows = await query('SELECT id, type, content, status, author_name, created_at, updated_at FROM mission_vision ORDER BY created_at DESC');
+    res.json({ items: rows });
+  } catch (err) {
+    console.error('Error listing mission_vision:', err);
+    res.status(500).json({ error: 'Database error', detail: err.message });
+  }
+});
+
+// Get active mission and vision separately
+app.get('/api/mission-vision/active', async (req, res) => {
+  try {
+    const rows = await query("SELECT id, type, content FROM mission_vision WHERE status = 'active'");
+    const result = { mission: null, vision: null };
+    rows.forEach(r => { result[r.type] = { id: r.id, content: r.content }; });
+    res.json(result);
+  } catch (err) {
+    console.error('Error fetching active mission_vision:', err);
+    res.status(500).json({ error: 'Database error', detail: err.message });
+  }
+});
+
+// Create new entry
+app.post('/api/mission-vision', async (req, res) => {
+  const { type, content, author_name = null, status = 'inactive' } = req.body;
+  if (!type || !content) return res.status(400).json({ error: 'type and content required' });
+  if (!['mission','vision'].includes(type)) return res.status(400).json({ error: 'invalid type' });
+  try {
+    const result = await query('INSERT INTO mission_vision (type, content, status, author_name) VALUES (?, ?, ?, ?)', [type, content, status, author_name]);
+    res.status(201).json({ id: result.insertId });
+  } catch (err) {
+    console.error('Error creating mission_vision:', err);
+    res.status(500).json({ error: 'Database error', detail: err.message });
+  }
+});
+
+// Update entry
+app.put('/api/mission-vision/:id', async (req, res) => {
+  const { content, author_name } = req.body;
+  try {
+    await query('UPDATE mission_vision SET content = ?, author_name = ? WHERE id = ?', [content, author_name, req.params.id]);
+    res.json({ message: 'Updated' });
+  } catch (err) {
+    console.error('Error updating mission_vision:', err);
+    res.status(500).json({ error: 'Database error', detail: err.message });
+  }
+});
+
+// Delete entry
+app.delete('/api/mission-vision/:id', async (req, res) => {
+  try {
+    await query('DELETE FROM mission_vision WHERE id = ?', [req.params.id]);
+    res.json({ message: 'Deleted' });
+  } catch (err) {
+    console.error('Error deleting mission_vision:', err);
+    res.status(500).json({ error: 'Database error', detail: err.message });
+  }
+});
+
+// Toggle active/inactive (when activating, ensure only one active per type)
+app.put('/api/mission-vision/:id/toggle', async (req, res) => {
+  const { makeActive } = req.body;
+  try {
+    const rows = await query('SELECT id, type FROM mission_vision WHERE id = ?', [req.params.id]);
+    if (rows.length === 0) return res.status(404).json({ error: 'Not found' });
+    const type = rows[0].type;
+    if (makeActive) {
+      // set others inactive
+      await query("UPDATE mission_vision SET status = 'inactive' WHERE type = ?", [type]);
+      await query("UPDATE mission_vision SET status = 'active' WHERE id = ?", [req.params.id]);
+    } else {
+      await query("UPDATE mission_vision SET status = 'inactive' WHERE id = ?", [req.params.id]);
+    }
+    res.json({ message: 'Toggled' });
+  } catch (err) {
+    console.error('Error toggling mission_vision:', err);
+    res.status(500).json({ error: 'Database error', detail: err.message });
+  }
+});
+
+// ===== HISTORY API (CRUD + toggle active) =====
+// List all history
+app.get('/api/history', async (req, res) => {
+  try {
+    const rows = await query('SELECT id, year, title, description, status, author_name, created_at, updated_at FROM history ORDER BY year ASC, created_at ASC');
+    res.json({ items: rows });
+  } catch (err) {
+    console.error('Error listing history:', err);
+    res.status(500).json({ error: 'Database error', detail: err.message });
+  }
+});
+
+// Get active history entries (for About page timeline)
+app.get('/api/history/active', async (req, res) => {
+  try {
+    const rows = await query("SELECT id, year, title, description FROM history WHERE status = 'active' ORDER BY year ASC, created_at ASC");
+    res.json({ items: rows });
+  } catch (err) {
+    console.error('Error fetching active history:', err);
+    res.status(500).json({ error: 'Database error', detail: err.message });
+  }
+});
+
+// Create history entry
+app.post('/api/history', async (req, res) => {
+  const { year, title, description, status = 'inactive', author_name = null } = req.body;
+  if (!year || !title || !description) return res.status(400).json({ error: 'year, title, description required' });
+  try {
+    const result = await query('INSERT INTO history (year, title, description, status, author_name) VALUES (?, ?, ?, ?, ?)', [year, title, description, status, author_name]);
+    res.status(201).json({ id: result.insertId });
+  } catch (err) {
+    console.error('Error creating history:', err);
+    res.status(500).json({ error: 'Database error', detail: err.message });
+  }
+});
+
+// Update history
+app.put('/api/history/:id', async (req, res) => {
+  const { year, title, description } = req.body;
+  try {
+    await query('UPDATE history SET year = ?, title = ?, description = ? WHERE id = ?', [year, title, description, req.params.id]);
+    res.json({ message: 'Updated' });
+  } catch (err) {
+    console.error('Error updating history:', err);
+    res.status(500).json({ error: 'Database error', detail: err.message });
+  }
+});
+
+// Delete history
+app.delete('/api/history/:id', async (req, res) => {
+  try {
+    await query('DELETE FROM history WHERE id = ?', [req.params.id]);
+    res.json({ message: 'Deleted' });
+  } catch (err) {
+    console.error('Error deleting history:', err);
+    res.status(500).json({ error: 'Database error', detail: err.message });
+  }
+});
+
+// Toggle active/inactive (when activating, can have multiple active entries)
+app.put('/api/history/:id/toggle', async (req, res) => {
+  const { makeActive } = req.body;
+  try {
+    const status = makeActive ? 'active' : 'inactive';
+    await query('UPDATE history SET status = ? WHERE id = ?', [status, req.params.id]);
+    res.json({ message: 'Toggled' });
+  } catch (err) {
+    console.error('Error toggling history:', err);
+    res.status(500).json({ error: 'Database error', detail: err.message });
+  }
 });

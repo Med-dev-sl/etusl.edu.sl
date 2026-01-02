@@ -206,7 +206,7 @@
 
 .value-card p {
   font-family: 'Georgia', 'Garamond', serif;
-  font-size: 15px;
+  font-size: 16px;
   color: #666;
   line-height: 1.6;
   margin: 0;
@@ -253,7 +253,7 @@
 
 .stat-card h4 {
   font-family: 'Georgia', 'Garamond', serif;
-  font-size: 40px;
+  font-size: 48px;
   font-weight: 600;
   color: #0056b3;
   margin: 0 0 10px 0;
@@ -261,7 +261,7 @@
 
 .stat-card p {
   font-family: 'Georgia', 'Garamond', serif;
-  font-size: 16px;
+  font-size: 18px;
   color: #666;
   margin: 0;
   line-height: 1.4;
@@ -330,7 +330,7 @@
 
 .timeline-content h4 {
   font-family: 'Georgia', 'Garamond', serif;
-  font-size: 22px;
+  font-size: 26px;
   font-weight: 600;
   color: #1a1a1a;
   margin: 0 0 10px 0;
@@ -338,7 +338,7 @@
 
 .timeline-content p {
   font-family: 'Georgia', 'Garamond', serif;
-  font-size: 15px;
+  font-size: 16px;
   color: #666;
   line-height: 1.6;
   margin: 0;

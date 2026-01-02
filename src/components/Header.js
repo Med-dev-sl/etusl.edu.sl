@@ -5,6 +5,7 @@ import './Header.css';
 function Header({ onNavigate }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [aboutOpen, setAboutOpen] = useState(false);
 
   const handleNavClick = (page) => {
     if (onNavigate) {
@@ -38,9 +39,21 @@ function Header({ onNavigate }) {
 
         <nav className={`navbar ${mobileMenuOpen ? 'active' : ''}`}>
           <div className="container">
-            <ul className="nav-menu">
+              <ul className="nav-menu">
               <li><a href="#" onClick={(e) => { e.preventDefault(); handleNavClick('home'); }}>Home</a></li>
-              <li><Link to="/about">About</Link></li>
+              <li className={`dropdown about-dropdown ${aboutOpen ? 'active' : ''}`}
+                  onMouseEnter={() => setAboutOpen(true)}
+                  onMouseLeave={() => setAboutOpen(false)}>
+                <a href="#" onClick={(e) => { e.preventDefault(); setAboutOpen(!aboutOpen); }}>
+                  About
+                  <span className={`arrow ${aboutOpen ? 'open' : ''}`}>▼</span>
+                </a>
+                <ul className={`dropdown-menu ${aboutOpen ? 'active' : ''}`}>
+                  <li><Link to="/about#history" onClick={() => handleNavClick('about')}>History</Link></li>
+                  <li><Link to="/leadership" onClick={() => handleNavClick('about')}>Leadership & Directorates</Link></li>
+                  <li><Link to="/partners" onClick={() => handleNavClick('about')}>Affiliate & Partners</Link></li>
+                </ul>
+              </li>
               <li><a href="#programs">Programs</a></li>
               <li><a href="#admissions">Admissions</a></li>
               <li><a href="#students">Student Life</a></li>

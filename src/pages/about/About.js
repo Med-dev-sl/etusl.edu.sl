@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import useScrollAnimation from '../../hooks/useScrollAnimation';
 import Header from '../../components/Header';
 import './About.css';
 import { TeamOutlined, AimOutlined, BulbOutlined, TrophyOutlined, HeartOutlined, GlobalOutlined } from '@ant-design/icons';
+import { useLocation } from 'react-router-dom';
 
 export default function About() {
   const missionRef = useScrollAnimation();
@@ -10,6 +11,44 @@ export default function About() {
   const valuesRef = useScrollAnimation();
   const historyRef = useScrollAnimation();
   const statsRef = useScrollAnimation();
+
+  const location = useLocation();
+  const [mission, setMission] = useState('');
+  const [vision, setVision] = useState('');
+  const [historyItems, setHistoryItems] = useState([]);
+
+  useEffect(() => {
+    async function fetchAbout() {
+      try {
+        const res = await fetch('http://localhost:4000/api/mission-vision/active');
+        if (!res.ok) return;
+        const data = await res.json();
+        setMission((data.mission && data.mission.content) || '');
+        setVision((data.vision && data.vision.content) || '');
+      } catch (err) {
+        console.error('Failed to load about content', err);
+      }
+    }
+    fetchAbout();
+    async function fetchHistory() {
+      try {
+        const hres = await fetch('http://localhost:4000/api/history/active');
+        if (!hres.ok) return;
+        const hdata = await hres.json();
+        setHistoryItems(hdata.items || []);
+      } catch (err) {
+        console.error('Failed to load history', err);
+      }
+    }
+    fetchHistory();
+  }, []);
+  useEffect(() => {
+    if (location.hash) {
+      const id = location.hash.replace('#', '');
+      const el = document.getElementById(id);
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [location]);
 
   return (
     <>
@@ -45,36 +84,27 @@ export default function About() {
       </section>
 
       {/* Mission Section */}
-      <section className="about-mission" ref={missionRef}>
+      <section id="mission" className="about-mission" ref={missionRef}>
         <div className="about-container">
           <div className="section-card mission-card">
             <div className="card-icon">
               <AimOutlined />
             </div>
             <h3>Our Mission</h3>
-            <p>
-              To provide accessible, high-quality technical and professional education that equips students with 
-              the knowledge, skills, and values necessary to excel in their careers and contribute meaningfully to 
-              society. We are committed to fostering innovation, promoting critical thinking, and developing responsible 
-              global citizens.
-            </p>
+            <p>{mission || 'Our mission text is not set yet.'}</p>
           </div>
         </div>
       </section>
 
       {/* Vision Section */}
-      <section className="about-vision" ref={visionRef}>
+      <section id="vision" className="about-vision" ref={visionRef}>
         <div className="about-container">
           <div className="section-card vision-card">
             <div className="card-icon">
               <BulbOutlined />
             </div>
             <h3>Our Vision</h3>
-            <p>
-              To be a leading institution of technical excellence recognized nationally and internationally for our 
-              commitment to innovation, quality education, and sustainable development. We aspire to graduate 
-              competent professionals who will drive technological advancement and economic growth in Africa.
-            </p>
+            <p>{vision || 'Our vision text is not set yet.'}</p>
           </div>
         </div>
       </section>
@@ -178,53 +208,19 @@ export default function About() {
         <div className="about-container">
           <h2 className="section-title">Our History</h2>
           <div className="history-timeline">
-            <div className="timeline-item">
-              <div className="timeline-year">2004</div>
-              <div className="timeline-content">
-                <h4>Foundation</h4>
-                <p>ETUSL was established with a vision to provide quality technical education in Sierra Leone</p>
-              </div>
-            </div>
-
-            <div className="timeline-item">
-              <div className="timeline-year">2008</div>
-              <div className="timeline-content">
-                <h4>First Graduation</h4>
-                <p>The first cohort of graduates successfully completed their programs</p>
-              </div>
-            </div>
-
-            <div className="timeline-item">
-              <div className="timeline-year">2012</div>
-              <div className="timeline-content">
-                <h4>Campus Expansion</h4>
-                <p>New facilities and academic buildings were constructed to support growth</p>
-              </div>
-            </div>
-
-            <div className="timeline-item">
-              <div className="timeline-year">2016</div>
-              <div className="timeline-content">
-                <h4>International Recognition</h4>
-                <p>ETUSL gained international accreditation for several academic programs</p>
-              </div>
-            </div>
-
-            <div className="timeline-item">
-              <div className="timeline-year">2020</div>
-              <div className="timeline-content">
-                <h4>Digital Transformation</h4>
-                <p>Implementation of cutting-edge learning management systems and online platforms</p>
-              </div>
-            </div>
-
-            <div className="timeline-item">
-              <div className="timeline-year">2026</div>
-              <div className="timeline-content">
-                <h4>Present Day</h4>
-                <p>Continuing to lead in technical education with over 5000 active students</p>
-              </div>
-            </div>
+            {historyItems.length === 0 ? (
+              <p>Our historical timeline is being prepared.</p>
+            ) : (
+              historyItems.map(item => (
+                <div className="timeline-item" key={item.id}>
+                  <div className="timeline-year">{item.year}</div>
+                  <div className="timeline-content">
+                    <h4>{item.title}</h4>
+                    <p>{item.description}</p>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
       </section>

@@ -1,9 +1,12 @@
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import '../staff/StaffDashboard.css';
 import 'antd/dist/reset.css';
 import Announcements from '../announcements/Announcements';
 import NewsEvents from '../newsevents/NewsEvents';
 import Faculties from '../faculties/Faculties';
+import MissionVisionManager from '../../components/MissionVisionManager';
+import HistoryManager from '../../components/HistoryManager';
 import {
   DashboardOutlined,
   UserOutlined,
@@ -46,6 +49,13 @@ export default function StaffDashboard({ onLogout }) {
   const [allStaff, setAllStaff] = useState([]);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [webPortalOpen, setWebPortalOpen] = useState(false);
+  const [missionText, setMissionText] = useState('');
+  const [visionText, setVisionText] = useState('');
+  const [mvLoading, setMvLoading] = useState(false);
+  const [mvSaving, setMvSaving] = useState(false);
+  const [showMVModal, setShowMVModal] = useState(false);
+  const [mvModalLoading, setMvModalLoading] = useState(false);
+  const [mvModalContent, setMvModalContent] = useState({ mission: '', vision: '' });
 
   useEffect(() => {
     // Get staff data from localStorage
@@ -231,6 +241,22 @@ export default function StaffDashboard({ onLogout }) {
                 <SettingOutlined className="menu-icon" /> Staff Management
               </button>
             )}
+            {isSuperAdmin && (
+              <button 
+                className={`menu-item ${activeTab === 'mission-vision' ? 'active' : ''}`}
+                onClick={() => setActiveTab('mission-vision')}
+              >
+                <BulbOutlined className="menu-icon" /> Mission & Vision Mgmt
+              </button>
+            )}
+            {isSuperAdmin && (
+              <button 
+                className={`menu-item ${activeTab === 'history-mgmt' ? 'active' : ''}`}
+                onClick={() => setActiveTab('history-mgmt')}
+              >
+                <HistoryOutlined className="menu-icon" /> History Mgmt
+              </button>
+            )}
 
             <div className="menu-divider"></div>
 
@@ -279,9 +305,19 @@ export default function StaffDashboard({ onLogout }) {
                 >
                   <NotificationOutlined className="portal-icon" /> News & Events
                 </button>
-                <a href="/" className="portal-link">
-                  <HistoryOutlined className="portal-icon" /> History
-                </a>
+                {isSuperAdmin ? (
+                  <button
+                    className="portal-link"
+                    onClick={() => { setActiveTab('history-mgmt'); setWebPortalOpen(false); }}
+                    style={{ border: 'none', background: 'none', textAlign: 'left', padding: '12px 20px', width: '100%', cursor: 'pointer' }}
+                  >
+                    <HistoryOutlined className="portal-icon" /> History
+                  </button>
+                ) : (
+                  <Link to="/about#history" className="portal-link" onClick={() => setWebPortalOpen(false)}>
+                    <HistoryOutlined className="portal-icon" /> History
+                  </Link>
+                )}
                 <a href="/" className="portal-link">
                   <BarChartOutlined className="portal-icon" /> ETUSL University Statistics
                 </a>
@@ -301,9 +337,55 @@ export default function StaffDashboard({ onLogout }) {
                 <a href="/" className="portal-link">
                   <UserAddOutlined className="portal-icon" /> Jobs
                 </a>
-                <a href="/" className="portal-link">
+                <button
+                  className="portal-link"
+                  onClick={async () => {
+                    setMvModalLoading(true);
+                    try {
+                      const res = await fetch('http://localhost:4000/api/mission-vision/active');
+                        const data = await res.json();
+                        // data.mission and data.vision are objects { id, content } or null
+                        setMvModalContent({ mission: data.mission || null, vision: data.vision || null });
+                      setShowMVModal(true);
+                    } catch (err) {
+                      console.error(err);
+                      alert('Failed to load mission & vision');
+                    } finally {
+                      setMvModalLoading(false);
+                    }
+                  }}
+                  style={{ border: 'none', background: 'none', textAlign: 'left', padding: '12px 20px', width: '100%', cursor: 'pointer' }}
+                >
                   <BulbOutlined className="portal-icon" /> Mission & Vision
-                </a>
+                </button>
+                {isSuperAdmin ? (
+                  <button
+                    className="portal-link"
+                    onClick={() => { setActiveTab('history-mgmt'); setWebPortalOpen(false); }}
+                    style={{ border: 'none', background: 'none', textAlign: 'left', padding: '12px 20px', width: '100%', cursor: 'pointer' }}
+                  >
+                    <HistoryOutlined className="portal-icon" /> History
+                  </button>
+                ) : (
+                  <button
+                    className="portal-link"
+                    onClick={async () => {
+                      try {
+                        const res = await fetch('http://localhost:4000/api/history/active');
+                        const data = await res.json();
+                        sessionStorage.setItem('history_modal', JSON.stringify(data.items || []));
+                        setMvModalContent(prev => ({ ...prev, history: data.items || [] }));
+                        setShowMVModal(true);
+                      } catch (err) {
+                        console.error(err);
+                        alert('Failed to load history');
+                      }
+                    }}
+                    style={{ border: 'none', background: 'none', textAlign: 'left', padding: '12px 20px', width: '100%', cursor: 'pointer' }}
+                  >
+                    <HistoryOutlined className="portal-icon" /> History
+                  </button>
+                )}
                 <a href="/" className="portal-link">
                   <ProjectOutlined className="portal-icon" /> Strategic Plans
                 </a>
@@ -487,8 +569,81 @@ export default function StaffDashboard({ onLogout }) {
               <Faculties />
             </div>
           )}
+
+          {activeTab === 'mission-vision' && (
+            <div className="tab-content mission-vision-tab">
+              <MissionVisionManager />
+            </div>
+          )}
+          {activeTab === 'history-mgmt' && (
+            <div className="tab-content history-mgmt-tab">
+              <HistoryManager />
+            </div>
+          )}
         </div>
       </div>
+      {showMVModal && (
+        <div className="mv-modal-backdrop" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 4000 }}>
+          <div className="mv-modal" style={{ background: '#fff', padding: 24, width: '90%', maxWidth: 900, borderRadius: 8, maxHeight: '90%', overflow: 'auto' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h2>Mission & Vision</h2>
+              <button onClick={() => setShowMVModal(false)} style={{ fontSize: 18, lineHeight: 1, background: 'none', border: 'none', cursor: 'pointer' }}>✕</button>
+            </div>
+
+            {/* If history present, render timeline */}
+            {mvModalContent.history && mvModalContent.history.length > 0 ? (
+              <div style={{ marginTop: 12 }}>
+                <h3>History Timeline</h3>
+                <ul style={{ listStyle: 'none', padding: 0 }}>
+                  {mvModalContent.history.map(h => (
+                    <li key={h.id} style={{ borderBottom: '1px solid #eee', padding: '12px 0' }}>
+                      <div style={{ display: 'flex', alignItems: 'flex-start' }}>
+                        <div style={{ minWidth: 80, fontWeight: 700 }}>{h.year}</div>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontWeight: 600 }}>{h.title}</div>
+                          <div style={{ color: '#444', whiteSpace: 'pre-wrap' }}>{h.description}</div>
+                        </div>
+                        {isSuperAdmin && (
+                          <div style={{ marginLeft: 12 }}>
+                            <button onClick={() => { sessionStorage.setItem('history_edit', JSON.stringify(h)); setShowMVModal(false); setActiveTab('history-mgmt'); }} style={{ marginRight: 8 }}>Edit</button>
+                            <button onClick={async () => { if (!window.confirm('Delete this history entry?')) return; try { const dres = await fetch(`http://localhost:4000/api/history/${h.id}`, { method: 'DELETE' }); if (!dres.ok) throw new Error('Delete failed'); const reload = await fetch('http://localhost:4000/api/history/active'); const newData = await reload.json(); setMvModalContent(prev => ({ ...prev, history: newData.items || [] })); alert('Deleted'); } catch(err){console.error(err); alert('Delete failed');} }}>Delete</button>
+                          </div>
+                        )}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : (
+              <>
+                <div style={{ marginTop: 12 }}>
+                  <h3 style={{ display: 'flex', alignItems: 'center', gap: 12 }}>Our Mission
+                    {isSuperAdmin && mvModalContent.mission && (
+                      <span style={{ marginLeft: 'auto' }}>
+                        <button onClick={() => { sessionStorage.setItem('mv_edit', JSON.stringify({ id: mvModalContent.mission.id, type: 'mission', content: mvModalContent.mission.content })); setShowMVModal(false); setActiveTab('mission-vision'); }} style={{ marginRight: 8 }}>Edit</button>
+                        <button onClick={async () => { if (!window.confirm('Delete mission?')) return; try { const dres = await fetch(`http://localhost:4000/api/mission-vision/${mvModalContent.mission.id}`, { method: 'DELETE' }); if (!dres.ok) throw new Error('Delete failed'); const reload = await fetch('http://localhost:4000/api/mission-vision/active'); const newData = await reload.json(); setMvModalContent({ mission: newData.mission || null, vision: newData.vision || null }); alert('Deleted'); } catch(err){console.error(err); alert('Delete failed');} }}>Delete</button>
+                      </span>
+                    )}
+                  </h3>
+                  <p style={{ whiteSpace: 'pre-wrap' }}>{mvModalLoading ? 'Loading...' : (mvModalContent.mission ? mvModalContent.mission.content : 'Mission not available')}</p>
+                </div>
+
+                <div style={{ marginTop: 12 }}>
+                  <h3 style={{ display: 'flex', alignItems: 'center', gap: 12 }}>Our Vision
+                    {isSuperAdmin && mvModalContent.vision && (
+                      <span style={{ marginLeft: 'auto' }}>
+                        <button onClick={() => { sessionStorage.setItem('mv_edit', JSON.stringify({ id: mvModalContent.vision.id, type: 'vision', content: mvModalContent.vision.content })); setShowMVModal(false); setActiveTab('mission-vision'); }} style={{ marginRight: 8 }}>Edit</button>
+                        <button onClick={async () => { if (!window.confirm('Delete vision?')) return; try { const dres = await fetch(`http://localhost:4000/api/mission-vision/${mvModalContent.vision.id}`, { method: 'DELETE' }); if (!dres.ok) throw new Error('Delete failed'); const reload = await fetch('http://localhost:4000/api/mission-vision/active'); const newData = await reload.json(); setMvModalContent({ mission: newData.mission || null, vision: newData.vision || null }); alert('Deleted'); } catch(err){console.error(err); alert('Delete failed');} }}>Delete</button>
+                      </span>
+                    )}
+                  </h3>
+                  <p style={{ whiteSpace: 'pre-wrap' }}>{mvModalLoading ? 'Loading...' : (mvModalContent.vision ? mvModalContent.vision.content : 'Vision not available')}</p>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

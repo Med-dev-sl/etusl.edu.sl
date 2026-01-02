@@ -1,0 +1,64 @@
+.history-manager {
+  background: #fff;
+  border: 1px solid #e6e6e6;
+  padding: 18px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(21, 22, 23, 0.04);
+}
+
+.history-manager-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.history-grid {
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  gap: 18px;
+}
+
+.history-form {
+  background: #fbfbfb;
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid #f0f0f0;
+}
+
+.form-row { margin-bottom: 10px; display: flex; gap: 8px; }
+.input { padding: 10px 12px; border: 1px solid #ddd; border-radius: 6px; flex: 1; }
+.textarea { padding: 10px 12px; border: 1px solid #ddd; border-radius: 6px; width: 100%; resize: vertical; }
+
+.form-actions { display: flex; justify-content: space-between; align-items: center; }
+.status-select label { display:block; font-size:12px; color:#444; margin-bottom:4px; }
+.status-select select { padding:8px 10px; border-radius:6px; border:1px solid #ddd; }
+
+.btn { padding: 8px 12px; border-radius: 6px; border: 1px solid #ccc; background: #fff; cursor: pointer; }
+.btn.primary { background: #0b5fff; color: #fff; border-color: #0753d1; }
+.btn.ghost { background: transparent; border-color: transparent; color: #333; }
+.btn.small { padding: 6px 8px; font-size: 13px; }
+.btn.danger { background: #ff4d4f; color: #fff; border-color: #e53935; }
+
+.history-list { max-height: 520px; overflow: auto; padding: 6px; }
+.history-list h4 { margin-top: 0; }
+.muted { color: #777; }
+
+.history-card { display: flex; gap: 12px; padding: 12px; border: 1px solid #f0f0f0; border-radius: 8px; margin-bottom: 10px; background: #fff; align-items: flex-start; }
+.history-card.active { box-shadow: 0 6px 12px rgba(11,95,255,0.06); border-color: rgba(11,95,255,0.12); }
+.card-left { width: 84px; display:flex; align-items:center; justify-content:center; }
+.year { font-weight: 700; font-size:18px; color:#0b5fff; }
+.card-body { flex:1; }
+.card-title { font-weight:700; margin-bottom:6px; }
+.card-desc { color:#444; white-space:pre-wrap; margin-bottom:8px; }
+.card-meta { display:flex; justify-content:space-between; align-items:center; }
+.badge { padding: 6px 8px; border-radius: 12px; font-size: 12px; text-transform: capitalize; }
+.badge-active { background:#e8f0ff; color:#0b5fff; }
+.badge-inactive { background:#f6f6f6; color:#666; }
+.card-actions button { margin-left: 8px; }
+
+@media (max-width: 900px) {
+  .history-grid { grid-template-columns: 1fr; }
+  .history-form { order: 2; }
+  .history-list { order: 1; }
+}
