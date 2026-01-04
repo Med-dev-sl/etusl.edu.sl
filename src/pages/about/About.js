@@ -10,12 +10,13 @@ export default function About() {
   const visionRef = useScrollAnimation();
   const valuesRef = useScrollAnimation();
   const historyRef = useScrollAnimation();
-  const statsRef = useScrollAnimation();
+ 
 
   const location = useLocation();
   const [mission, setMission] = useState('');
   const [vision, setVision] = useState('');
   const [historyItems, setHistoryItems] = useState([]);
+  const [campuses, setCampuses] = useState([]);
 
   useEffect(() => {
     async function fetchAbout() {
@@ -41,6 +42,17 @@ export default function About() {
       }
     }
     fetchHistory();
+    async function fetchCampuses() {
+      try {
+        const cres = await fetch('http://localhost:4000/api/campuses/active');
+        if (!cres.ok) return;
+        const cdata = await cres.json();
+        setCampuses(cdata.items || []);
+      } catch (err) {
+        console.error('Failed to load campuses', err);
+      }
+    }
+    fetchCampuses();
   }, []);
   useEffect(() => {
     if (location.hash) {
@@ -165,43 +177,7 @@ export default function About() {
         </div>
       </section>
 
-      {/* Statistics Section */}
-      <section className="about-statistics" ref={statsRef}>
-        <div className="about-container">
-          <h2 className="section-title">By The Numbers</h2>
-          <div className="stats-grid">
-            <div className="stat-card">
-              <h4>5000+</h4>
-              <p>Active Students</p>
-            </div>
-
-            <div className="stat-card">
-              <h4>150+</h4>
-              <p>Faculty Members</p>
-            </div>
-
-            <div className="stat-card">
-              <h4>25+</h4>
-              <p>Academic Programs</p>
-            </div>
-
-            <div className="stat-card">
-              <h4>15</h4>
-              <p>Faculties & Schools</p>
-            </div>
-
-            <div className="stat-card">
-              <h4>98%</h4>
-              <p>Graduate Employment Rate</p>
-            </div>
-
-            <div className="stat-card">
-              <h4>20+</h4>
-              <p>Years of Excellence</p>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* Statistics Section removed per request */}
 
       {/* History Section */}
       <section className="about-history" ref={historyRef}>
@@ -225,39 +201,32 @@ export default function About() {
         </div>
       </section>
 
-      {/* Faculties Section */}
-      <section className="about-faculties">
+      {/* Campuses Section (Harvard-style large headings) */}
+      <section id="campuses" className="about-campuses" style={{ padding: '48px 0' }}>
         <div className="about-container">
-          <h2 className="section-title">Our Faculties</h2>
-          <p className="section-subtitle">Organized into 15 faculties, offering diverse academic programs</p>
-          <div className="faculties-list">
-            <div className="faculty-item">
-              <h4>Faculty of Science</h4>
-              <p>Advanced studies in mathematics, physics, chemistry, and biology</p>
+          <h2 className="section-title" style={{ fontSize: 36, marginBottom: 16 }}>Our Campuses</h2>
+          {campuses.length === 0 ? (
+            <p style={{ fontSize: 18 }}>Campus information is being prepared.</p>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 40 }}>
+              {campuses.map(c => (
+                <div key={c.id} style={{ display: 'flex', gap: 24, alignItems: 'flex-start', borderBottom: '1px solid #eee', paddingBottom: 24 }}>
+                  <div style={{ flex: '0 0 40%', maxWidth: '40%' }}>
+                    <img src={c.image_path ? `http://localhost:4000${c.image_path}` : '/campus-placeholder.jpg'} alt={c.name || 'Campus'} style={{ width: '100%', height: 'auto', borderRadius: 6 }} />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <h3 style={{ fontSize: 28, margin: '0 0 8px' }}>{c.name}</h3>
+                    <p style={{ fontSize: 18, lineHeight: 1.6, color: '#333', marginBottom: 12, whiteSpace: 'pre-wrap' }}>{c.description}</p>
+                    <p style={{ fontSize: 16, color: '#666', margin: 0 }}><strong>Location:</strong> {c.location}</p>
+                  </div>
+                </div>
+              ))}
             </div>
-            <div className="faculty-item">
-              <h4>Faculty of Engineering</h4>
-              <p>Civil, mechanical, electrical, and software engineering programs</p>
-            </div>
-            <div className="faculty-item">
-              <h4>Faculty of Technology</h4>
-              <p>Information technology, computer science, and digital innovation</p>
-            </div>
-            <div className="faculty-item">
-              <h4>Faculty of Business</h4>
-              <p>Commerce, management, and entrepreneurship programs</p>
-            </div>
-            <div className="faculty-item">
-              <h4>Faculty of Liberal Arts</h4>
-              <p>Humanities, social sciences, and professional development</p>
-            </div>
-            <div className="faculty-item">
-              <h4>Faculty of Health Sciences</h4>
-              <p>Healthcare, nursing, and public health programs</p>
-            </div>
-          </div>
+          )}
         </div>
       </section>
+
+      
 
       {/* Call to Action */}
       <section className="about-cta">

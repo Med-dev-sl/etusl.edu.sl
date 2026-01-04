@@ -1,0 +1,17 @@
+/* Simple styles for Leadership page; adjust as needed */
+.container {
+  padding: 0 16px;
+}
+
+.leadership-page h1 {
+  letter-spacing: -0.5px;
+}
+
+@media (max-width: 800px) {
+  .leadership-page .container {
+    padding: 0 12px;
+  }
+  .leadership-page section div[style*="gridTemplateColumns"] {
+    grid-template-columns: 1fr !important;
+  }
+}

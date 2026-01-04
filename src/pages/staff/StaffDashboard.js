@@ -56,6 +56,22 @@ export default function StaffDashboard({ onLogout }) {
   const [showMVModal, setShowMVModal] = useState(false);
   const [mvModalLoading, setMvModalLoading] = useState(false);
   const [mvModalContent, setMvModalContent] = useState({ mission: '', vision: '' });
+  const [campuses, setCampuses] = useState([]);
+  const [leadershipItems, setLeadershipItems] = useState([]);
+  const [affiliatesItems, setAffiliatesItems] = useState([]);
+  const [campusUploading, setCampusUploading] = useState(false);
+  const [affiliateName, setAffiliateName] = useState('');
+  const [affiliateType, setAffiliateType] = useState('affiliate');
+  const [affiliateWebsite, setAffiliateWebsite] = useState('');
+  const [affiliateEmail, setAffiliateEmail] = useState('');
+  const [affiliateDescription, setAffiliateDescription] = useState('');
+  const [affiliateImageFile, setAffiliateImageFile] = useState(null);
+  const [editingAffiliateId, setEditingAffiliateId] = useState(null);
+  const [campusName, setCampusName] = useState('');
+  const [campusLocationField, setCampusLocationField] = useState('');
+  const [campusDescriptionField, setCampusDescriptionField] = useState('');
+  const [campusImageFile, setCampusImageFile] = useState(null);
+  const [editingCampusId, setEditingCampusId] = useState(null);
 
   useEffect(() => {
     // Get staff data from localStorage
@@ -73,6 +89,105 @@ export default function StaffDashboard({ onLogout }) {
     }
     setLoading(false);
   }, []);
+
+  const loadCampuses = async () => {
+    try {
+      const res = await fetch('http://localhost:4000/api/campuses');
+      if (!res.ok) return;
+      const data = await res.json();
+      setCampuses(data.items || []);
+    } catch (err) {
+      console.error('Failed to load campuses', err);
+    }
+  };
+
+  const loadLeadership = async () => {
+    try {
+      const res = await fetch('http://localhost:4000/api/leadership');
+      if (!res.ok) {
+        console.error('Leadership fetch failed', res.status);
+        setLeadershipItems([]);
+        return;
+      }
+      const data = await res.json();
+      const items = data.items || [];
+      setLeadershipItems(items);
+    } catch (err) { console.error('Failed to load leadership list', err); setLeadershipItems([]); }
+  };
+
+  const handleDeleteLeadership = async (id) => {
+    if (!window.confirm('Delete entry?')) return;
+    try {
+      const dres = await fetch(`http://localhost:4000/api/leadership/${id}`, { method: 'DELETE' });
+      if (!dres.ok) throw new Error('Delete failed');
+      alert('Deleted');
+      await loadLeadership();
+    } catch (err) { console.error(err); alert('Delete failed'); }
+  };
+
+  const handleEditLeadership = async (id) => {
+    try {
+      const r = await fetch(`http://localhost:4000/api/leadership/${id}`);
+      if (!r.ok) throw new Error('Failed to load');
+      const dd = await r.json();
+      const it = dd.item;
+      sessionStorage.setItem('lead_edit_id', it.id);
+      document.getElementById('lead-name').value = it.name || '';
+      document.getElementById('lead-title').value = it.title || '';
+      document.getElementById('lead-location').value = it.location || '';
+      document.getElementById('lead-description').value = it.description || '';
+      document.getElementById('lead-type').value = it.type || 'leader';
+      const el = document.getElementById('leadership-table-container');
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+    } catch (err) { console.error(err); alert('Load failed'); }
+  };
+
+  const loadAffiliates = async () => {
+    try {
+      const res = await fetch('http://localhost:4000/api/affiliates');
+      if (!res.ok) return setAffiliatesItems([]);
+      const data = await res.json();
+      setAffiliatesItems(data.items || []);
+    } catch (err) {
+      console.error('Failed to load affiliates', err);
+      setAffiliatesItems([]);
+    }
+  };
+
+  const handleEditAffiliate = async (id) => {
+    try {
+      const r = await fetch(`http://localhost:4000/api/affiliates/${id}`);
+      if (!r.ok) throw new Error('Failed to load');
+      const dd = await r.json();
+      const it = dd.item;
+      setEditingAffiliateId(it.id);
+      setAffiliateName(it.name || '');
+      setAffiliateType(it.type || 'affiliate');
+      setAffiliateWebsite(it.website || '');
+      setAffiliateEmail(it.email || '');
+      setAffiliateDescription(it.description || '');
+      const el = document.getElementById('affiliates-table-container'); if (el) el.scrollIntoView({ behavior: 'smooth' });
+    } catch (err) { console.error(err); alert('Load failed'); }
+  };
+
+  const handleDeleteAffiliate = async (id) => {
+    if (!window.confirm('Delete affiliate/partner?')) return;
+    try {
+      const dres = await fetch(`http://localhost:4000/api/affiliates/${id}`, { method: 'DELETE' });
+      if (!dres.ok) throw new Error('Delete failed');
+      alert('Deleted');
+      await loadAffiliates();
+    } catch (err) { console.error(err); alert('Delete failed'); }
+  };
+
+  useEffect(() => {
+    if (isSuperAdmin) loadLeadership();
+    if (isSuperAdmin) loadAffiliates();
+  }, [isSuperAdmin]);
+
+  useEffect(() => {
+    if (isSuperAdmin) loadCampuses();
+  }, [isSuperAdmin]);
 
   const fetchAllStaff = async () => {
     try {
@@ -257,6 +372,22 @@ export default function StaffDashboard({ onLogout }) {
                 <HistoryOutlined className="menu-icon" /> History Mgmt
               </button>
             )}
+              {isSuperAdmin && (
+                <button
+                  className={`menu-item ${activeTab === 'campuses-mgmt' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('campuses-mgmt')}
+                >
+                  <PictureOutlined className="menu-icon" /> Campuses Mgmt
+                </button>
+              )}
+              {isSuperAdmin && (
+                <button
+                  className={`menu-item ${activeTab === 'leadership-mgmt' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('leadership-mgmt')}
+                >
+                  <CrownOutlined className="menu-icon" /> Leadership Mgmt
+                </button>
+              )}
 
             <div className="menu-divider"></div>
 
@@ -321,6 +452,32 @@ export default function StaffDashboard({ onLogout }) {
                 <a href="/" className="portal-link">
                   <BarChartOutlined className="portal-icon" /> ETUSL University Statistics
                 </a>
+                {isSuperAdmin ? (
+                  <button
+                    className="portal-link"
+                    onClick={() => { setActiveTab('campuses-mgmt'); setWebPortalOpen(false); }}
+                    style={{ border: 'none', background: 'none', textAlign: 'left', padding: '12px 20px', width: '100%', cursor: 'pointer' }}
+                  >
+                    <PictureOutlined className="portal-icon" /> Campuses
+                  </button>
+                ) : (
+                  <a href="/about#campuses" className="portal-link">
+                    <PictureOutlined className="portal-icon" /> Campuses
+                  </a>
+                )}
+                {isSuperAdmin ? (
+                  <button
+                    className="portal-link"
+                    onClick={() => { setActiveTab('affiliates-mgmt'); setWebPortalOpen(false); }}
+                    style={{ border: 'none', background: 'none', textAlign: 'left', padding: '12px 20px', width: '100%', cursor: 'pointer' }}
+                  >
+                    <LinkOutlined className="portal-icon" /> Affiliates & Partners
+                  </button>
+                ) : (
+                  <a href="/partners" className="portal-link">
+                    <LinkOutlined className="portal-icon" /> Affiliates & Partners
+                  </a>
+                )}
                 <a href="/" className="portal-link">
                   <AppstoreOutlined className="portal-icon" /> Programs
                 </a>
@@ -418,6 +575,92 @@ export default function StaffDashboard({ onLogout }) {
               <h2>Welcome, {staff.name}!</h2>
               <div className="empty-state">
                 <p>📊 Dashboard statistics coming soon</p>
+              </div>
+            </div>
+          )}
+          {activeTab === 'affiliates-mgmt' && isSuperAdmin && (
+            <div className="tab-content affiliates-mgmt-tab">
+              <h2>Affiliates & Partners Management</h2>
+              <p style={{ color: '#666' }}>Add, edit, or remove affiliates and partners visible on the public Affiliates & Partners page.</p>
+
+              <div className="affiliate-form" style={{ marginTop: 16, marginBottom: 24 }}>
+                <h3>Add / Edit</h3>
+                <input type="text" value={affiliateName} onChange={e => setAffiliateName(e.target.value)} placeholder="Name" style={{ display: 'block', width: '100%', padding: 8, marginBottom: 8 }} />
+                <select value={affiliateType} onChange={e => setAffiliateType(e.target.value)} style={{ display: 'block', width: '100%', padding: 8, marginBottom: 8 }}>
+                  <option value="affiliate">Affiliate</option>
+                  <option value="partner">Partner</option>
+                </select>
+                <input type="text" value={affiliateWebsite} onChange={e => setAffiliateWebsite(e.target.value)} placeholder="Website (optional)" style={{ display: 'block', width: '100%', padding: 8, marginBottom: 8 }} />
+                <input type="email" value={affiliateEmail} onChange={e => setAffiliateEmail(e.target.value)} placeholder="Email (optional)" style={{ display: 'block', width: '100%', padding: 8, marginBottom: 8 }} />
+                <label style={{ display: 'block', marginBottom: 6, fontWeight: 600 }}>Brief Info / Biography</label>
+                <textarea value={affiliateDescription} onChange={e => setAffiliateDescription(e.target.value)} placeholder="Brief information about the affiliate or partner" rows={6} style={{ display: 'block', width: '100%', padding: 8, marginBottom: 8 }} />
+                <input type="file" onChange={e => setAffiliateImageFile(e.target.files && e.target.files[0])} accept="image/*" style={{ display: 'block', marginBottom: 12 }} />
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button onClick={async () => {
+                    if (!affiliateName) return alert('Please provide a name');
+                    try {
+                      const fd = new FormData();
+                      fd.append('name', affiliateName);
+                      fd.append('type', affiliateType);
+                      fd.append('website', affiliateWebsite);
+                      fd.append('email', affiliateEmail);
+                      fd.append('description', affiliateDescription);
+                      fd.append('status', 'active');
+                      if (affiliateImageFile) fd.append('image', affiliateImageFile);
+
+                      if (editingAffiliateId) {
+                        const res = await fetch(`http://localhost:4000/api/affiliates/${editingAffiliateId}`, { method: 'PUT', body: fd });
+                        if (!res.ok) throw new Error('Update failed');
+                        alert('Updated');
+                        setEditingAffiliateId(null);
+                      } else {
+                        const res = await fetch('http://localhost:4000/api/affiliates', { method: 'POST', body: fd });
+                        if (!res.ok) throw new Error('Create failed');
+                        alert('Created');
+                      }
+                      // reset
+                      setAffiliateName(''); setAffiliateType('affiliate'); setAffiliateWebsite(''); setAffiliateEmail(''); setAffiliateDescription(''); setAffiliateImageFile(null);
+                      await loadAffiliates();
+                    } catch (err) { console.error(err); alert('Save failed'); }
+                  }} className="submit-btn">{editingAffiliateId ? 'Save Changes' : 'Add'}</button>
+
+                  {editingAffiliateId && (
+                    <button onClick={() => { setEditingAffiliateId(null); setAffiliateName(''); setAffiliateType('affiliate'); setAffiliateWebsite(''); setAffiliateEmail(''); setAffiliateDescription(''); setAffiliateImageFile(null); }}>Cancel</button>
+                  )}
+                </div>
+              </div>
+
+              <div className="affiliate-list">
+                <h3>Existing Affiliates & Partners</h3>
+                <div id="affiliates-table-container" style={{ marginTop: 12 }}>
+                  {affiliatesItems.length === 0 ? (
+                    <p>No affiliates or partners yet.</p>
+                  ) : (
+                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                      <thead>
+                        <tr>
+                          <th style={{ textAlign: 'left', padding: 8 }}>Name</th>
+                          <th style={{ textAlign: 'left', padding: 8 }}>Type</th>
+                          <th style={{ textAlign: 'left', padding: 8 }}>Website</th>
+                          <th style={{ textAlign: 'left', padding: 8 }}>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {affiliatesItems.map(a => (
+                          <tr key={a.id}>
+                            <td style={{ padding: 8 }}>{a.name}</td>
+                            <td style={{ padding: 8 }}>{a.type}</td>
+                            <td style={{ padding: 8 }}>{a.website ? <a href={a.website} target="_blank" rel="noreferrer">Link</a> : ''}</td>
+                            <td style={{ padding: 8 }}>
+                              <button onClick={() => handleEditAffiliate(a.id)} style={{ marginRight: 8 }}>Edit</button>
+                              <button onClick={() => handleDeleteAffiliate(a.id)}>Delete</button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
               </div>
             </div>
           )}
@@ -578,6 +821,236 @@ export default function StaffDashboard({ onLogout }) {
           {activeTab === 'history-mgmt' && (
             <div className="tab-content history-mgmt-tab">
               <HistoryManager />
+            </div>
+          )}
+          {activeTab === 'campuses-mgmt' && isSuperAdmin && (
+            <div className="tab-content campuses-mgmt-tab">
+              <h2>Campuses Management</h2>
+              <p style={{ color: '#666' }}>Add, edit, or remove campus entries visible on the public About page.</p>
+
+              <div className="campus-form" style={{ marginTop: 16, marginBottom: 24 }}>
+                <h3>{editingCampusId ? 'Edit Campus' : 'Add New Campus'}</h3>
+                <input type="text" value={campusName} onChange={e => setCampusName(e.target.value)} placeholder="Campus name" style={{ display: 'block', width: '100%', padding: 8, marginBottom: 8 }} />
+                <input type="text" value={campusLocationField} onChange={e => setCampusLocationField(e.target.value)} placeholder="Location" style={{ display: 'block', width: '100%', padding: 8, marginBottom: 8 }} />
+                <textarea value={campusDescriptionField} onChange={e => setCampusDescriptionField(e.target.value)} placeholder="Description" rows={4} style={{ display: 'block', width: '100%', padding: 8, marginBottom: 8 }} />
+                <input type="file" onChange={e => { if (e.target.files && e.target.files[0]) setCampusImageFile(e.target.files[0]); }} accept="image/*" style={{ display: 'block', marginBottom: 12 }} />
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button onClick={async () => {
+                    if (!campusName.trim()) return alert('Please provide a campus name');
+                    setCampusUploading(true);
+                    try {
+                      const fd = new FormData();
+                      fd.append('name', campusName.trim());
+                      fd.append('location', campusLocationField.trim());
+                      fd.append('description', campusDescriptionField.trim());
+                      fd.append('status', 'active');
+                      if (campusImageFile) fd.append('image', campusImageFile);
+
+                      if (editingCampusId) {
+                        const res = await fetch(`http://localhost:4000/api/campuses/${editingCampusId}`, { method: 'PUT', body: fd });
+                        if (!res.ok) throw new Error('Failed to update campus');
+                        alert('Campus updated');
+                      } else {
+                        const res = await fetch('http://localhost:4000/api/campuses', { method: 'POST', body: fd });
+                        if (!res.ok) throw new Error('Failed to add campus');
+                        alert('Campus added');
+                      }
+
+                      await loadCampuses();
+                      // reset form
+                      setCampusName('');
+                      setCampusLocationField('');
+                      setCampusDescriptionField('');
+                      setCampusImageFile(null);
+                      setEditingCampusId(null);
+                      // reset file input visually
+                      const inp = document.querySelector('.campus-form input[type=file]');
+                      if (inp) inp.value = '';
+                    } catch (err) {
+                      console.error(err);
+                      alert(editingCampusId ? 'Update failed' : 'Add campus failed');
+                    } finally {
+                      setCampusUploading(false);
+                    }
+                  }} disabled={campusUploading} className="submit-btn">{campusUploading ? 'Saving...' : (editingCampusId ? 'Save Changes' : 'Add Campus')}</button>
+
+                  {editingCampusId && (
+                    <button onClick={() => {
+                      setEditingCampusId(null);
+                      setCampusName('');
+                      setCampusLocationField('');
+                      setCampusDescriptionField('');
+                      setCampusImageFile(null);
+                      const inp = document.querySelector('.campus-form input[type=file]');
+                      if (inp) inp.value = '';
+                    }}>Cancel</button>
+                  )}
+                </div>
+              </div>
+
+              <div className="campus-list">
+                <h3>Existing Campuses</h3>
+                <div style={{ marginTop: 12 }}>
+                  {campuses.length === 0 ? (
+                    <p>No campuses yet.</p>
+                  ) : (
+                    <table className="management-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
+                      <thead>
+                        <tr>
+                          <th style={{ textAlign: 'left', padding: 8 }}>Name</th>
+                          <th style={{ textAlign: 'left', padding: 8 }}>Location</th>
+                          <th style={{ textAlign: 'left', padding: 8 }}>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {campuses.map(c => (
+                          <tr key={c.id}>
+                            <td style={{ padding: 8 }}>{c.name}</td>
+                            <td style={{ padding: 8 }}>{c.location}</td>
+                            <td style={{ padding: 8 }}>
+                              <button onClick={async () => {
+                                // populate edit form
+                                try {
+                                  const res = await fetch(`http://localhost:4000/api/campuses/${c.id}`);
+                                  if (!res.ok) throw new Error('Failed to load campus');
+                                  const data = await res.json();
+                                  const campus = data.campus;
+                                  setEditingCampusId(campus.id);
+                                  setCampusName(campus.name || '');
+                                  setCampusLocationField(campus.location || '');
+                                  setCampusDescriptionField(campus.description || '');
+                                  setCampusImageFile(null);
+                                  // scroll to form
+                                  const el = document.querySelector('.campus-form');
+                                  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                } catch (err) { console.error(err); alert('Failed to load campus for edit'); }
+                              }} style={{ marginRight: 8 }}>Edit</button>
+
+                              <button onClick={async () => {
+                                if (!window.confirm('Delete campus?')) return;
+                                try {
+                                  const dres = await fetch(`http://localhost:4000/api/campuses/${c.id}`, { method: 'DELETE' });
+                                  if (!dres.ok) throw new Error('Delete failed');
+                                  alert('Deleted');
+                                  await loadCampuses();
+                                } catch (err) { console.error(err); alert('Delete failed'); }
+                              }} style={{ marginRight: 8 }}>Delete</button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+          {activeTab === 'leadership-mgmt' && isSuperAdmin && (
+            <div className="tab-content leadership-mgmt-tab">
+              <h2>Leadership & Directorates Management</h2>
+              <p style={{ color: '#666' }}>Add, edit, or remove leadership and directorate entries visible on the public Leadership page.</p>
+
+              <div className="leadership-form" style={{ marginTop: 16, marginBottom: 24 }}>
+                <h3>{/* dynamic title set below */}Add / Edit Entry</h3>
+                <select value={/* type select */ (editingCampusId && 'leader') || 'leader'} disabled style={{ display: 'none' }} />
+                <input type="text" id="lead-name" placeholder="Name or Directorate" style={{ display: 'block', width: '100%', padding: 8, marginBottom: 8 }} />
+                <input type="text" id="lead-title" placeholder="Title (leave blank for directorates)" style={{ display: 'block', width: '100%', padding: 8, marginBottom: 8 }} />
+                <input type="text" id="lead-location" placeholder="Location" style={{ display: 'block', width: '100%', padding: 8, marginBottom: 8 }} />
+                <label style={{ display: 'block', marginBottom: 6, fontWeight: 600 }}>Biography</label>
+                <textarea id="lead-description" placeholder="Biography (full details)" rows={8} style={{ display: 'block', width: '100%', padding: 8, marginBottom: 8 }} />
+                <select id="lead-type" style={{ display: 'block', width: '100%', padding: 8, marginBottom: 8 }}>
+                  <option value="leader">Leader</option>
+                  <option value="directorate">Directorate</option>
+                </select>
+                <input type="file" id="lead-image" accept="image/*" style={{ display: 'block', marginBottom: 12 }} />
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button onClick={async () => {
+                    const name = document.getElementById('lead-name').value.trim();
+                    const title = document.getElementById('lead-title').value.trim();
+                    const location = document.getElementById('lead-location').value.trim();
+                    const description = document.getElementById('lead-description').value.trim();
+                    const type = document.getElementById('lead-type').value;
+                    const fileInput = document.getElementById('lead-image');
+                    if (!name) return alert('Please provide a name');
+                    try {
+                      const fd = new FormData();
+                      fd.append('name', name);
+                      fd.append('title', title);
+                      fd.append('location', location);
+                      fd.append('description', description);
+                      fd.append('type', type);
+                      fd.append('status', 'active');
+                      if (fileInput.files && fileInput.files[0]) fd.append('image', fileInput.files[0]);
+
+                      // If editing, use selected id stored in sessionStorage
+                      const editingId = sessionStorage.getItem('lead_edit_id');
+                      if (editingId) {
+                        const res = await fetch(`http://localhost:4000/api/leadership/${editingId}`, { method: 'PUT', body: fd });
+                        if (!res.ok) throw new Error('Update failed');
+                        alert('Updated');
+                        sessionStorage.removeItem('lead_edit_id');
+                      } else {
+                        const res = await fetch('http://localhost:4000/api/leadership', { method: 'POST', body: fd });
+                        if (!res.ok) throw new Error('Create failed');
+                        alert('Created');
+                      }
+                      // reset
+                      document.getElementById('lead-name').value = '';
+                      document.getElementById('lead-title').value = '';
+                      document.getElementById('lead-location').value = '';
+                      document.getElementById('lead-description').value = '';
+                      document.getElementById('lead-type').value = 'leader';
+                      if (fileInput) fileInput.value = '';
+                      await loadLeadership();
+                    } catch (err) { console.error(err); alert('Save failed'); }
+                  }} className="submit-btn">Save</button>
+
+                  <button onClick={() => {
+                    sessionStorage.removeItem('lead_edit_id');
+                    document.getElementById('lead-name').value = '';
+                    document.getElementById('lead-title').value = '';
+                    document.getElementById('lead-location').value = '';
+                    document.getElementById('lead-description').value = '';
+                    document.getElementById('lead-type').value = 'leader';
+                    const fi = document.getElementById('lead-image'); if (fi) fi.value = '';
+                  }}>Clear</button>
+                </div>
+              </div>
+
+              <div className="leadership-list">
+                <h3>Existing Entries</h3>
+                <div style={{ marginTop: 12 }}>
+                  <div id="leadership-table-container">
+                    {leadershipItems && leadershipItems.length > 0 ? (
+                      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                        <thead>
+                          <tr>
+                            <th style={{ textAlign: 'left', padding: 8 }}>Name</th>
+                            <th style={{ textAlign: 'left', padding: 8 }}>Type</th>
+                            <th style={{ textAlign: 'left', padding: 8 }}>Location</th>
+                            <th style={{ textAlign: 'left', padding: 8 }}>Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {leadershipItems.map(it => (
+                            <tr key={it.id}>
+                              <td style={{ padding: 8 }}>{it.name}</td>
+                              <td style={{ padding: 8 }}>{it.type}</td>
+                              <td style={{ padding: 8 }}>{it.location || ''}</td>
+                              <td style={{ padding: 8 }}>
+                                <button onClick={() => handleEditLeadership(it.id)} style={{ marginRight: 8 }}>Edit</button>
+                                <button onClick={() => handleDeleteLeadership(it.id)}>Delete</button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    ) : (
+                      <p>No entries yet.</p>
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
           )}
         </div>

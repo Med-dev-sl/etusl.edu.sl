@@ -441,11 +441,10 @@ const newsEventsUpload = multer({
     }
   }
 });
-
 // Create new news/event
 app.post('/api/news-events', newsEventsUpload.single('image'), async (req, res) => {
   const { headline, description, event_time, location, event_type = 'event', author_id, author_name, status = 'active' } = req.body;
-  
+
   if (!headline || !description || !author_id) {
     return res.status(400).json({ error: 'Headline, description, and author_id required' });
   }
@@ -627,6 +626,338 @@ app.delete('/api/faculties/:id', async (req, res) => {
     await query('DELETE FROM faculties WHERE id = ?', [req.params.id]);
     res.json({ message: 'Faculty deleted' });
   } catch (err) {
+    res.status(500).json({ error: 'Database error', detail: err.message });
+  }
+});
+// ===== AFFILIATES & PARTNERS API =====
+// Storage for affiliates images
+const affiliatesStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const dir = path.join(__dirname, 'uploads', 'affiliates');
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    cb(null, dir);
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname);
+    cb(null, `affiliate_${Date.now()}${ext}`);
+  }
+});
+
+const affiliatesUpload = multer({
+  storage: affiliatesStorage,
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const allowed = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    if (allowed.includes(file.mimetype)) cb(null, true);
+    else cb(new Error('Only image files allowed'));
+  }
+});
+
+// List all affiliates/partners
+app.get('/api/affiliates', async (req, res) => {
+  try {
+    const rows = await query('SELECT id, name, type, description, image_path, website, email, status, author_name, created_at FROM affiliates_partners ORDER BY id DESC');
+    res.json({ items: rows });
+  } catch (err) {
+    console.error('Error listing affiliates:', err);
+    res.status(500).json({ error: 'Database error', detail: err.message });
+  }
+});
+
+// Public: active affiliates/partners
+app.get('/api/affiliates/active', async (req, res) => {
+  try {
+    const rows = await query("SELECT id, name, type, description, image_path, website FROM affiliates_partners WHERE status = 'active' ORDER BY id DESC");
+    res.json({ items: rows });
+  } catch (err) {
+    console.error('Error fetching active affiliates:', err);
+    res.status(500).json({ error: 'Database error', detail: err.message });
+  }
+});
+
+// Get single affiliate
+app.get('/api/affiliates/:id', async (req, res) => {
+  try {
+    const rows = await query('SELECT id, name, type, description, image_path, website, email, status, author_id, author_name FROM affiliates_partners WHERE id = ?', [req.params.id]);
+    if (rows.length === 0) return res.status(404).json({ error: 'Not found' });
+    res.json({ item: rows[0] });
+  } catch (err) {
+    console.error('Error fetching affiliate:', err);
+    res.status(500).json({ error: 'Database error', detail: err.message });
+  }
+});
+
+// Create affiliate/partner
+app.post('/api/affiliates', affiliatesUpload.single('image'), async (req, res) => {
+  const { name, type = 'affiliate', description = '', website = '', email = '', author_id = 1, author_name = 'System', status = 'inactive' } = req.body;
+  if (!name) return res.status(400).json({ error: 'name required' });
+  const imagePath = req.file ? `/uploads/affiliates/${req.file.filename}` : null;
+  try {
+    const result = await query('INSERT INTO affiliates_partners (name, type, description, image_path, website, email, author_id, author_name, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', [name, type, description, imagePath, website, email, author_id, author_name, status]);
+    res.status(201).json({ message: 'Affiliate created', id: result.insertId, imagePath });
+  } catch (err) {
+    console.error('Error creating affiliate:', err);
+    res.status(500).json({ error: 'Database error', detail: err.message });
+  }
+});
+
+// Update affiliate/partner
+app.put('/api/affiliates/:id', affiliatesUpload.single('image'), async (req, res) => {
+  const { name, type = 'affiliate', description = '', website = '', email = '', status = 'inactive' } = req.body;
+  try {
+    if (req.file) {
+      const imagePath = `/uploads/affiliates/${req.file.filename}`;
+      const rows = await query('SELECT image_path FROM affiliates_partners WHERE id = ?', [req.params.id]);
+      if (rows.length > 0 && rows[0].image_path) {
+        const oldPath = path.join(__dirname, rows[0].image_path);
+        if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+      }
+      await query('UPDATE affiliates_partners SET name = ?, type = ?, description = ?, image_path = ?, website = ?, email = ?, status = ? WHERE id = ?', [name, type, description, imagePath, website, email, status, req.params.id]);
+    } else {
+      await query('UPDATE affiliates_partners SET name = ?, type = ?, description = ?, website = ?, email = ?, status = ? WHERE id = ?', [name, type, description, website, email, status, req.params.id]);
+    }
+    res.json({ message: 'Affiliate updated' });
+  } catch (err) {
+    console.error('Error updating affiliate:', err);
+    res.status(500).json({ error: 'Database error', detail: err.message });
+  }
+});
+
+// Delete affiliate
+app.delete('/api/affiliates/:id', async (req, res) => {
+  try {
+    const rows = await query('SELECT image_path FROM affiliates_partners WHERE id = ?', [req.params.id]);
+    if (rows.length > 0 && rows[0].image_path) {
+      const filePath = path.join(__dirname, rows[0].image_path);
+      if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+    }
+    await query('DELETE FROM affiliates_partners WHERE id = ?', [req.params.id]);
+    res.json({ message: 'Affiliate deleted' });
+  } catch (err) {
+    console.error('Error deleting affiliate:', err);
+    res.status(500).json({ error: 'Database error', detail: err.message });
+  }
+});
+
+// ===== CAMPUSES API =====
+// Storage for campus images
+const campusesStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const campusesDir = path.join(__dirname, 'uploads', 'campuses');
+    if (!fs.existsSync(campusesDir)) {
+      fs.mkdirSync(campusesDir, { recursive: true });
+    }
+    cb(null, campusesDir);
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname);
+    cb(null, `campus_${Date.now()}${ext}`);
+  }
+});
+
+const campusesUpload = multer({
+  storage: campusesStorage,
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const allowed = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    if (allowed.includes(file.mimetype)) cb(null, true);
+    else cb(new Error('Only image files allowed'));
+  }
+});
+
+// Get all campuses
+app.get('/api/campuses', async (req, res) => {
+  try {
+    const rows = await query('SELECT id, name, description, image_path, location, status, author_name, created_at FROM campuses ORDER BY id DESC');
+    res.json({ items: rows });
+  } catch (err) {
+    console.error('Error listing campuses:', err);
+    res.status(500).json({ error: 'Database error', detail: err.message });
+  }
+});
+
+// Get active campuses for About page
+app.get('/api/campuses/active', async (req, res) => {
+  try {
+    const rows = await query("SELECT id, name, description, image_path, location FROM campuses WHERE status = 'active' ORDER BY id DESC");
+    res.json({ items: rows });
+  } catch (err) {
+    console.error('Error fetching active campuses:', err);
+    res.status(500).json({ error: 'Database error', detail: err.message });
+  }
+});
+
+// Create new campus (SUPERADMIN only in production)
+app.post('/api/campuses', campusesUpload.single('image'), async (req, res) => {
+  const { name, description, location, author_id = 1, author_name = 'System', status = 'inactive' } = req.body;
+  if (!name) return res.status(400).json({ error: 'name required' });
+  const imagePath = req.file ? `/uploads/campuses/${req.file.filename}` : null;
+  try {
+    const result = await query('INSERT INTO campuses (name, description, image_path, location, author_id, author_name, status) VALUES (?, ?, ?, ?, ?, ?, ?)', [name, description, imagePath, location, author_id, author_name, status]);
+    res.status(201).json({ message: 'Campus created', id: result.insertId, imagePath });
+  } catch (err) {
+    console.error('Error creating campus:', err);
+    res.status(500).json({ error: 'Database error', detail: err.message });
+  }
+});
+
+// Delete campus
+app.delete('/api/campuses/:id', async (req, res) => {
+  try {
+    const rows = await query('SELECT image_path FROM campuses WHERE id = ?', [req.params.id]);
+    if (rows.length > 0 && rows[0].image_path) {
+      const filePath = path.join(__dirname, rows[0].image_path);
+      if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+    }
+    await query('DELETE FROM campuses WHERE id = ?', [req.params.id]);
+    res.json({ message: 'Campus deleted' });
+  } catch (err) {
+    console.error('Error deleting campus:', err);
+    res.status(500).json({ error: 'Database error', detail: err.message });
+  }
+});
+ 
+// ===== LEADERSHIP API =====
+// Storage for leadership images
+const leadershipStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const dir = path.join(__dirname, 'uploads', 'leadership');
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    cb(null, dir);
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname);
+    cb(null, `leadership_${Date.now()}${ext}`);
+  }
+});
+
+const leadershipUpload = multer({
+  storage: leadershipStorage,
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const allowed = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    if (allowed.includes(file.mimetype)) cb(null, true);
+    else cb(new Error('Only image files allowed'));
+  }
+});
+
+// List all leadership entries
+app.get('/api/leadership', async (req, res) => {
+  try {
+    const rows = await query('SELECT id, name, title, type, description, image_path, location, status, author_name, created_at FROM leadership ORDER BY id DESC');
+    res.json({ items: rows });
+  } catch (err) {
+    console.error('Error listing leadership:', err);
+    res.status(500).json({ error: 'Database error', detail: err.message });
+  }
+});
+
+// Get active leadership entries (for public page)
+app.get('/api/leadership/active', async (req, res) => {
+  try {
+    const rows = await query("SELECT id, name, title, type, description, image_path, location FROM leadership WHERE status = 'active' ORDER BY id DESC");
+    res.json({ items: rows });
+  } catch (err) {
+    console.error('Error fetching active leadership:', err);
+    res.status(500).json({ error: 'Database error', detail: err.message });
+  }
+});
+
+// Create leadership entry
+app.post('/api/leadership', leadershipUpload.single('image'), async (req, res) => {
+  const { name, title = '', type = 'leader', description = '', location = '', author_id = 1, author_name = 'System', status = 'inactive' } = req.body;
+  if (!name) return res.status(400).json({ error: 'name required' });
+  const imagePath = req.file ? `/uploads/leadership/${req.file.filename}` : null;
+  try {
+    const result = await query('INSERT INTO leadership (name, title, type, description, image_path, location, author_id, author_name, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', [name, title, type, description, imagePath, location, author_id, author_name, status]);
+    res.status(201).json({ message: 'Created', id: result.insertId, imagePath });
+  } catch (err) {
+    console.error('Error creating leadership entry:', err);
+    res.status(500).json({ error: 'Database error', detail: err.message });
+  }
+});
+
+// Get single leadership entry
+app.get('/api/leadership/:id', async (req, res) => {
+  try {
+    const rows = await query('SELECT id, name, title, type, description, image_path, location, status FROM leadership WHERE id = ?', [req.params.id]);
+    if (rows.length === 0) return res.status(404).json({ error: 'Not found' });
+    res.json({ item: rows[0] });
+  } catch (err) {
+    console.error('Error fetching leadership:', err);
+    res.status(500).json({ error: 'Database error', detail: err.message });
+  }
+});
+
+// Update leadership entry
+app.put('/api/leadership/:id', leadershipUpload.single('image'), async (req, res) => {
+  const { name, title = '', type = 'leader', description = '', location = '', status = 'inactive' } = req.body;
+  try {
+    if (req.file) {
+      const imagePath = `/uploads/leadership/${req.file.filename}`;
+      const rows = await query('SELECT image_path FROM leadership WHERE id = ?', [req.params.id]);
+      if (rows.length > 0 && rows[0].image_path) {
+        const oldPath = path.join(__dirname, rows[0].image_path);
+        if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+      }
+      await query('UPDATE leadership SET name = ?, title = ?, type = ?, description = ?, image_path = ?, location = ?, status = ? WHERE id = ?', [name, title, type, description, imagePath, location, status, req.params.id]);
+    } else {
+      await query('UPDATE leadership SET name = ?, title = ?, type = ?, description = ?, location = ?, status = ? WHERE id = ?', [name, title, type, description, location, status, req.params.id]);
+    }
+    res.json({ message: 'Updated' });
+  } catch (err) {
+    console.error('Error updating leadership:', err);
+    res.status(500).json({ error: 'Database error', detail: err.message });
+  }
+});
+
+// Delete leadership entry
+app.delete('/api/leadership/:id', async (req, res) => {
+  try {
+    const rows = await query('SELECT image_path FROM leadership WHERE id = ?', [req.params.id]);
+    if (rows.length > 0 && rows[0].image_path) {
+      const filePath = path.join(__dirname, rows[0].image_path);
+      if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+    }
+    await query('DELETE FROM leadership WHERE id = ?', [req.params.id]);
+    res.json({ message: 'Deleted' });
+  } catch (err) {
+    console.error('Error deleting leadership:', err);
+    res.status(500).json({ error: 'Database error', detail: err.message });
+  }
+});
+
+// Get single campus
+app.get('/api/campuses/:id', async (req, res) => {
+  try {
+    const rows = await query('SELECT id, name, description, image_path, location, status, author_name, created_at FROM campuses WHERE id = ?', [req.params.id]);
+    if (rows.length === 0) return res.status(404).json({ error: 'Campus not found' });
+    res.json({ campus: rows[0] });
+  } catch (err) {
+    console.error('Error fetching campus:', err);
+    res.status(500).json({ error: 'Database error', detail: err.message });
+  }
+});
+
+// Update campus
+app.put('/api/campuses/:id', campusesUpload.single('image'), async (req, res) => {
+  const { name, description, location, status } = req.body;
+  try {
+    if (req.file) {
+      const imagePath = `/uploads/campuses/${req.file.filename}`;
+      // remove old image if exists
+      const rows = await query('SELECT image_path FROM campuses WHERE id = ?', [req.params.id]);
+      if (rows.length > 0 && rows[0].image_path) {
+        const oldPath = path.join(__dirname, rows[0].image_path);
+        if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+      }
+      await query('UPDATE campuses SET name = ?, description = ?, image_path = ?, location = ?, status = ? WHERE id = ?', [name, description, imagePath, location, status, req.params.id]);
+    } else {
+      await query('UPDATE campuses SET name = ?, description = ?, location = ?, status = ? WHERE id = ?', [name, description, location, status, req.params.id]);
+    }
+    res.json({ message: 'Campus updated' });
+  } catch (err) {
+    console.error('Error updating campus:', err);
     res.status(500).json({ error: 'Database error', detail: err.message });
   }
 });

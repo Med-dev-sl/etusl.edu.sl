@@ -1,0 +1,9 @@
+/* Simple styles for partners page - Harvard-style feel can be tuned */
+.partners-page .container {
+  padding: 0 16px;
+}
+
+@media (max-width: 700px) {
+  .partners-page h1 { font-size: 32px; }
+  .partners-page img { max-width: 100%; }
+}
