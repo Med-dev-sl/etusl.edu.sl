@@ -72,6 +72,12 @@ export default function StaffDashboard({ onLogout }) {
   const [campusDescriptionField, setCampusDescriptionField] = useState('');
   const [campusImageFile, setCampusImageFile] = useState(null);
   const [editingCampusId, setEditingCampusId] = useState(null);
+  const [policiesItems, setPoliciesItems] = useState([]);
+  const [policyTitle, setPolicyTitle] = useState('');
+  const [policySlug, setPolicySlug] = useState('');
+  const [policyContent, setPolicyContent] = useState('');
+  const [policyStatus, setPolicyStatus] = useState('inactive');
+  const [editingPolicyId, setEditingPolicyId] = useState(null);
 
   useEffect(() => {
     // Get staff data from localStorage
@@ -180,9 +186,47 @@ export default function StaffDashboard({ onLogout }) {
     } catch (err) { console.error(err); alert('Delete failed'); }
   };
 
+  const loadPolicies = async () => {
+    try {
+      const res = await fetch('http://localhost:4000/api/policies');
+      if (!res.ok) return setPoliciesItems([]);
+      const data = await res.json();
+      setPoliciesItems(data.items || []);
+    } catch (err) {
+      console.error('Failed to load policies', err);
+      setPoliciesItems([]);
+    }
+  };
+
+  const handleEditPolicy = async (id) => {
+    try {
+      const r = await fetch(`http://localhost:4000/api/policies/${id}`);
+      if (!r.ok) throw new Error('Failed to load');
+      const dd = await r.json();
+      const it = dd.item;
+      setEditingPolicyId(it.id);
+      setPolicyTitle(it.title || '');
+      setPolicySlug(it.slug || '');
+      setPolicyContent(it.content || '');
+      setPolicyStatus(it.status || 'inactive');
+      const el = document.getElementById('policies-table-container'); if (el) el.scrollIntoView({ behavior: 'smooth' });
+    } catch (err) { console.error(err); alert('Load failed'); }
+  };
+
+  const handleDeletePolicy = async (id) => {
+    if (!window.confirm('Delete policy?')) return;
+    try {
+      const dres = await fetch(`http://localhost:4000/api/policies/${id}`, { method: 'DELETE' });
+      if (!dres.ok) throw new Error('Delete failed');
+      alert('Deleted');
+      await loadPolicies();
+    } catch (err) { console.error(err); alert('Delete failed'); }
+  };
+
   useEffect(() => {
     if (isSuperAdmin) loadLeadership();
     if (isSuperAdmin) loadAffiliates();
+    if (isSuperAdmin) loadPolicies();
   }, [isSuperAdmin]);
 
   useEffect(() => {
@@ -388,6 +432,14 @@ export default function StaffDashboard({ onLogout }) {
                   <CrownOutlined className="menu-icon" /> Leadership Mgmt
                 </button>
               )}
+              {isSuperAdmin && (
+                <button
+                  className={`menu-item ${activeTab === 'policies-mgmt' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('policies-mgmt')}
+                >
+                  <FileProtectOutlined className="menu-icon" /> Policies Mgmt
+                </button>
+              )}
 
             <div className="menu-divider"></div>
 
@@ -419,9 +471,19 @@ export default function StaffDashboard({ onLogout }) {
                 
                 <div className="portal-section-divider"></div>
                 
-                <a href="/policies" className="portal-link" onClick={() => setWebPortalOpen(false)}>
-                  <FileProtectOutlined className="portal-icon" /> ETUSL Policies
-                </a>
+                {isSuperAdmin ? (
+                  <button
+                    className="portal-link"
+                    onClick={() => { setActiveTab('policies-mgmt'); setWebPortalOpen(false); }}
+                    style={{ border: 'none', background: 'none', textAlign: 'left', padding: '12px 20px', width: '100%', cursor: 'pointer' }}
+                  >
+                    <FileProtectOutlined className="portal-icon" /> ETUSL Policies
+                  </button>
+                ) : (
+                  <a href="/policies" className="portal-link" onClick={() => setWebPortalOpen(false)}>
+                    <FileProtectOutlined className="portal-icon" /> ETUSL Policies
+                  </a>
+                )}
                 <button 
                   className="portal-link"
                   onClick={() => setActiveTab('announcements')}
@@ -575,6 +637,78 @@ export default function StaffDashboard({ onLogout }) {
               <h2>Welcome, {staff.name}!</h2>
               <div className="empty-state">
                 <p>📊 Dashboard statistics coming soon</p>
+              </div>
+            </div>
+          )}
+          {activeTab === 'policies-mgmt' && isSuperAdmin && (
+            <div className="tab-content policies-mgmt-tab">
+              <h2>University Policies Management</h2>
+              <p style={{ color: '#666' }}>Add, edit, or manage university policies.</p>
+
+              <div className="policy-form" style={{ marginTop: 16, marginBottom: 24 }}>
+                <h3>Add / Edit Policy</h3>
+                <input type="text" value={policyTitle} onChange={e => setPolicyTitle(e.target.value)} placeholder="Policy Title" style={{ display: 'block', width: '100%', padding: 8, marginBottom: 8 }} />
+                <input type="text" value={policySlug} onChange={e => setPolicySlug(e.target.value)} placeholder="Slug (optional)" style={{ display: 'block', width: '100%', padding: 8, marginBottom: 8 }} />
+                <select value={policyStatus} onChange={e => setPolicyStatus(e.target.value)} style={{ display: 'block', width: '100%', padding: 8, marginBottom: 8 }}>
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
+                </select>
+                <label style={{ display: 'block', marginBottom: 6, fontWeight: 600 }}>Policy Content</label>
+                <textarea value={policyContent} onChange={e => setPolicyContent(e.target.value)} placeholder="Policy details and content" rows={8} style={{ display: 'block', width: '100%', padding: 8, marginBottom: 12 }} />
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button onClick={async () => {
+                    if (!policyTitle) return alert('Please provide a title');
+                    try {
+                      const body = { title: policyTitle, slug: policySlug, content: policyContent, status: policyStatus, author_id: staff.id, author_name: staff.name };
+                      if (editingPolicyId) {
+                        const res = await fetch(`http://localhost:4000/api/policies/${editingPolicyId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+                        if (!res.ok) throw new Error('Update failed');
+                        alert('Updated');
+                        setEditingPolicyId(null);
+                      } else {
+                        const res = await fetch('http://localhost:4000/api/policies', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+                        if (!res.ok) throw new Error('Create failed');
+                        alert('Created');
+                      }
+                      setPolicyTitle(''); setPolicySlug(''); setPolicyContent(''); setPolicyStatus('inactive');
+                      await loadPolicies();
+                    } catch (err) { console.error(err); alert('Save failed'); }
+                  }} className="submit-btn">{editingPolicyId ? 'Save Changes' : 'Add'}</button>
+                  {editingPolicyId && (
+                    <button onClick={() => { setEditingPolicyId(null); setPolicyTitle(''); setPolicySlug(''); setPolicyContent(''); setPolicyStatus('inactive'); }}>Cancel</button>
+                  )}
+                </div>
+              </div>
+
+              <div className="policy-list">
+                <h3>Existing Policies</h3>
+                <div id="policies-table-container" style={{ marginTop: 12 }}>
+                  {policiesItems.length === 0 ? (
+                    <p>No policies yet.</p>
+                  ) : (
+                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                      <thead>
+                        <tr>
+                          <th style={{ textAlign: 'left', padding: 8 }}>Title</th>
+                          <th style={{ textAlign: 'left', padding: 8 }}>Status</th>
+                          <th style={{ textAlign: 'left', padding: 8 }}>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {policiesItems.map(p => (
+                          <tr key={p.id}>
+                            <td style={{ padding: 8 }}>{p.title}</td>
+                            <td style={{ padding: 8 }}>{p.status}</td>
+                            <td style={{ padding: 8 }}>
+                              <button onClick={() => handleEditPolicy(p.id)} style={{ marginRight: 8 }}>Edit</button>
+                              <button onClick={() => handleDeletePolicy(p.id)}>Delete</button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
               </div>
             </div>
           )}
