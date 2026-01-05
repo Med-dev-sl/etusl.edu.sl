@@ -51,6 +51,8 @@ function Header({ onNavigate }) {
                 <ul className={`dropdown-menu ${aboutOpen ? 'active' : ''}`}>
                   <li><Link to="/about#history" onClick={() => handleNavClick('about')}>History</Link></li>
                   <li><Link to="/leadership" onClick={() => handleNavClick('about')}>Leadership & Directorates</Link></li>
+                  <li><Link to="/policies" onClick={() => handleNavClick('about')}>University Policies</Link></li>
+                  <li><Link to="/strategic-plan" onClick={() => handleNavClick('about')}>University Strategic Plan</Link></li>
                   <li><Link to="/partners" onClick={() => handleNavClick('about')}>Affiliate & Partners</Link></li>
                 </ul>
               </li>

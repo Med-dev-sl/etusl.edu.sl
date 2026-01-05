@@ -419,7 +419,7 @@ export default function StaffDashboard({ onLogout }) {
                 
                 <div className="portal-section-divider"></div>
                 
-                <a href="/" className="portal-link">
+                <a href="/policies" className="portal-link" onClick={() => setWebPortalOpen(false)}>
                   <FileProtectOutlined className="portal-icon" /> ETUSL Policies
                 </a>
                 <button 

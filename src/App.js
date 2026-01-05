@@ -16,6 +16,7 @@ import StaffLogin from './pages/StaffLogin';
 import About from './pages/about/About';
 import Leadership from './pages/leadership/Leadership';
 import Partners from './pages/partners/Partners';
+import Policies from './pages/policies/Policies';
 import StaffDashboard from './pages/staff/StaffDashboard';
 import Announcements from './pages/announcements/Announcements';
 import NewsEvents from './pages/newsevents/NewsEvents';
@@ -63,6 +64,7 @@ function App() {
         <Route path="/about" element={<About />} />
         <Route path="/leadership" element={<Leadership />} />
         <Route path="/partners" element={<Partners />} />
+        <Route path="/policies" element={<Policies />} />
         <Route path="/jobs" element={<Jobs />} />
         <Route path="/assets" element={<AssetsRegister />} />
 

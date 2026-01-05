@@ -739,6 +739,77 @@ app.delete('/api/affiliates/:id', async (req, res) => {
   }
 });
 
+// ===== POLICIES API =====
+// Public: list of active policies
+app.get('/api/policies/active', async (req, res) => {
+  try {
+    const rows = await query("SELECT id, title, slug, content FROM policies WHERE status = 'active' ORDER BY id DESC");
+    res.json({ items: rows });
+  } catch (err) {
+    console.error('Error fetching active policies:', err);
+    res.status(500).json({ error: 'Database error', detail: err.message });
+  }
+});
+
+// Admin: list all policies
+app.get('/api/policies', async (req, res) => {
+  try {
+    const rows = await query('SELECT id, title, slug, status, author_name, created_at FROM policies ORDER BY id DESC');
+    res.json({ items: rows });
+  } catch (err) {
+    console.error('Error listing policies:', err);
+    res.status(500).json({ error: 'Database error', detail: err.message });
+  }
+});
+
+// Get single policy by id
+app.get('/api/policies/:id', async (req, res) => {
+  try {
+    const rows = await query('SELECT id, title, slug, content, status, author_id, author_name FROM policies WHERE id = ?', [req.params.id]);
+    if (rows.length === 0) return res.status(404).json({ error: 'Not found' });
+    res.json({ item: rows[0] });
+  } catch (err) {
+    console.error('Error fetching policy:', err);
+    res.status(500).json({ error: 'Database error', detail: err.message });
+  }
+});
+
+// Create policy
+app.post('/api/policies', async (req, res) => {
+  const { title, slug, content = '', status = 'inactive', author_id = 1, author_name = 'System' } = req.body;
+  if (!title) return res.status(400).json({ error: 'title required' });
+  try {
+    const result = await query('INSERT INTO policies (title, slug, content, status, author_id, author_name) VALUES (?, ?, ?, ?, ?, ?)', [title, slug, content, status, author_id, author_name]);
+    res.status(201).json({ message: 'Policy created', id: result.insertId });
+  } catch (err) {
+    console.error('Error creating policy:', err);
+    res.status(500).json({ error: 'Database error', detail: err.message });
+  }
+});
+
+// Update policy
+app.put('/api/policies/:id', async (req, res) => {
+  const { title, slug, content = '', status = 'inactive' } = req.body;
+  try {
+    await query('UPDATE policies SET title = ?, slug = ?, content = ?, status = ? WHERE id = ?', [title, slug, content, status, req.params.id]);
+    res.json({ message: 'Policy updated' });
+  } catch (err) {
+    console.error('Error updating policy:', err);
+    res.status(500).json({ error: 'Database error', detail: err.message });
+  }
+});
+
+// Delete policy
+app.delete('/api/policies/:id', async (req, res) => {
+  try {
+    await query('DELETE FROM policies WHERE id = ?', [req.params.id]);
+    res.json({ message: 'Policy deleted' });
+  } catch (err) {
+    console.error('Error deleting policy:', err);
+    res.status(500).json({ error: 'Database error', detail: err.message });
+  }
+});
+
 // ===== CAMPUSES API =====
 // Storage for campus images
 const campusesStorage = multer.diskStorage({
