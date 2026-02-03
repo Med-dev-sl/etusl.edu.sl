@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import './FacultiesPublic.css';
+import Header from '../../components/Header';
 import {
   BankOutlined,
   UserOutlined,
@@ -35,16 +36,21 @@ export default function FacultiesPublic() {
 
   if (loading) {
     return (
-      <div className="faculties-public-container">
-        <div className="loading-state">
-          <p>Loading faculties...</p>
+      <>
+        <Header />
+        <div className="faculties-public-container">
+          <div className="loading-state">
+            <p>Loading faculties...</p>
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
   return (
-    <div className="faculties-public-container">
+    <>
+      <Header />
+      <div className="faculties-public-container">
       <div className="faculties-hero">
         <div className="hero-content">
           <h1>Our Faculties</h1>
@@ -189,5 +195,6 @@ export default function FacultiesPublic() {
         )}
       </div>
     </div>
+    </>
   );
 }
