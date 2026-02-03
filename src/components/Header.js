@@ -6,6 +6,7 @@ function Header({ onNavigate }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
+  const [academicsOpen, setAcademicsOpen] = useState(false);
 
   const handleNavClick = (page) => {
     if (onNavigate) {
@@ -54,16 +55,25 @@ function Header({ onNavigate }) {
                   <li><Link to="/policies" onClick={() => handleNavClick('about')}>University Policies</Link></li>
                   <li><Link to="/strategic-plan" onClick={() => handleNavClick('about')}>University Strategic Plan</Link></li>
                   <li><Link to="/partners" onClick={() => handleNavClick('about')}>Affiliate & Partners</Link></li>
-                  <li className="dropdown-divider"></li>
-                  <li><Link to="/faculties" onClick={() => handleNavClick('about')}>Faculties</Link></li>
-                  <li><a href="#programs" onClick={() => handleNavClick('about')}>Programmes</a></li>
-                  <li><a href="#calendar" onClick={() => handleNavClick('about')}>Academic Calendar</a></li>
-                  <li><a href="#library" onClick={() => handleNavClick('about')}>Library</a></li>
-                  <li><a href="#fees" onClick={() => handleNavClick('about')}>Fees Structure</a></li>
                 </ul>
               </li>
               <li><a href="#programs">Programs</a></li>
               <li><a href="#admissions">Admissions</a></li>
+              <li className={`dropdown academics-dropdown ${academicsOpen ? 'active' : ''}`}
+                  onMouseEnter={() => setAcademicsOpen(true)}
+                  onMouseLeave={() => setAcademicsOpen(false)}>
+                <a href="#" onClick={(e) => { e.preventDefault(); setAcademicsOpen(!academicsOpen); }}>
+                  Academics
+                  <span className={`arrow ${academicsOpen ? 'open' : ''}`}>▼</span>
+                </a>
+                <ul className={`dropdown-menu ${academicsOpen ? 'active' : ''}`}>
+                  <li><Link to="/faculties" onClick={() => handleNavClick('academics')}>Faculties</Link></li>
+                  <li><a href="#programmes">Programmes</a></li>
+                  <li><a href="#calendar">Academic Calendar</a></li>
+                  <li><a href="#library">Library</a></li>
+                  <li><a href="#fees">Fees Structure</a></li>
+                </ul>
+              </li>
               <li><a href="#students">Student Life</a></li>
               <li><a href="#faculty">Faculty</a></li>
               <li className="dropdown">
