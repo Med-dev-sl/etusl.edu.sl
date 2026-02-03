@@ -810,6 +810,77 @@ app.delete('/api/policies/:id', async (req, res) => {
   }
 });
 
+// ===== STRATEGIC PLAN API =====
+// Public: list of active strategic plan items
+app.get('/api/strategic-plan/active', async (req, res) => {
+  try {
+    const rows = await query("SELECT id, title, slug, content FROM strategic_plan WHERE status = 'active' ORDER BY id DESC");
+    res.json({ items: rows });
+  } catch (err) {
+    console.error('Error fetching active strategic plan:', err);
+    res.status(500).json({ error: 'Database error', detail: err.message });
+  }
+});
+
+// Admin: list all strategic plan items
+app.get('/api/strategic-plan', async (req, res) => {
+  try {
+    const rows = await query('SELECT id, title, slug, status, author_name, created_at FROM strategic_plan ORDER BY id DESC');
+    res.json({ items: rows });
+  } catch (err) {
+    console.error('Error listing strategic plan:', err);
+    res.status(500).json({ error: 'Database error', detail: err.message });
+  }
+});
+
+// Get single strategic plan item by id
+app.get('/api/strategic-plan/:id', async (req, res) => {
+  try {
+    const rows = await query('SELECT id, title, slug, content, status, author_id, author_name FROM strategic_plan WHERE id = ?', [req.params.id]);
+    if (rows.length === 0) return res.status(404).json({ error: 'Not found' });
+    res.json({ item: rows[0] });
+  } catch (err) {
+    console.error('Error fetching strategic plan item:', err);
+    res.status(500).json({ error: 'Database error', detail: err.message });
+  }
+});
+
+// Create strategic plan item
+app.post('/api/strategic-plan', async (req, res) => {
+  const { title, slug, content = '', status = 'inactive', author_id = 1, author_name = 'System' } = req.body;
+  if (!title) return res.status(400).json({ error: 'title required' });
+  try {
+    const result = await query('INSERT INTO strategic_plan (title, slug, content, status, author_id, author_name) VALUES (?, ?, ?, ?, ?, ?)', [title, slug, content, status, author_id, author_name]);
+    res.status(201).json({ message: 'Strategic plan item created', id: result.insertId });
+  } catch (err) {
+    console.error('Error creating strategic plan item:', err);
+    res.status(500).json({ error: 'Database error', detail: err.message });
+  }
+});
+
+// Update strategic plan item
+app.put('/api/strategic-plan/:id', async (req, res) => {
+  const { title, slug, content = '', status = 'inactive' } = req.body;
+  try {
+    await query('UPDATE strategic_plan SET title = ?, slug = ?, content = ?, status = ? WHERE id = ?', [title, slug, content, status, req.params.id]);
+    res.json({ message: 'Strategic plan item updated' });
+  } catch (err) {
+    console.error('Error updating strategic plan item:', err);
+    res.status(500).json({ error: 'Database error', detail: err.message });
+  }
+});
+
+// Delete strategic plan item
+app.delete('/api/strategic-plan/:id', async (req, res) => {
+  try {
+    await query('DELETE FROM strategic_plan WHERE id = ?', [req.params.id]);
+    res.json({ message: 'Strategic plan item deleted' });
+  } catch (err) {
+    console.error('Error deleting strategic plan item:', err);
+    res.status(500).json({ error: 'Database error', detail: err.message });
+  }
+});
+
 // ===== CAMPUSES API =====
 // Storage for campus images
 const campusesStorage = multer.diskStorage({
@@ -1064,7 +1135,11 @@ app.put('/api/about', async (req, res) => {
 
 const port = process.env.PORT || 4000;
 app.listen(port, () => {
-  console.log(`Backend running on port ${port}`);
+  console.log(`\n🚀 Backend Server Started`);
+  console.log(`📍 Running on: http://localhost:${port}`);
+  console.log(`🗄️  Database: ${process.env.DB_NAME || 'if0_40833228_etusl_db'}`);
+  console.log(`🔗 Host: ${process.env.DB_HOST || 'sql100.infinityfree.com'}`);
+  console.log(`\n✅ Ready to accept requests!\n`);
 });
 
 // ===== MISSION & VISION API (CRUD + toggle active) =====

@@ -78,6 +78,12 @@ export default function StaffDashboard({ onLogout }) {
   const [policyContent, setPolicyContent] = useState('');
   const [policyStatus, setPolicyStatus] = useState('inactive');
   const [editingPolicyId, setEditingPolicyId] = useState(null);
+  const [strategicPlanItems, setStrategicPlanItems] = useState([]);
+  const [spTitle, setSpTitle] = useState('');
+  const [spSlug, setSpSlug] = useState('');
+  const [spContent, setSpContent] = useState('');
+  const [spStatus, setSpStatus] = useState('inactive');
+  const [editingSpId, setEditingSpId] = useState(null);
 
   useEffect(() => {
     // Get staff data from localStorage
@@ -223,10 +229,48 @@ export default function StaffDashboard({ onLogout }) {
     } catch (err) { console.error(err); alert('Delete failed'); }
   };
 
+  const loadStrategicPlan = async () => {
+    try {
+      const res = await fetch('http://localhost:4000/api/strategic-plan');
+      if (!res.ok) return setStrategicPlanItems([]);
+      const data = await res.json();
+      setStrategicPlanItems(data.items || []);
+    } catch (err) {
+      console.error('Failed to load strategic plan', err);
+      setStrategicPlanItems([]);
+    }
+  };
+
+  const handleEditStrategicPlan = async (id) => {
+    try {
+      const r = await fetch(`http://localhost:4000/api/strategic-plan/${id}`);
+      if (!r.ok) throw new Error('Failed to load');
+      const dd = await r.json();
+      const it = dd.item;
+      setEditingSpId(it.id);
+      setSpTitle(it.title || '');
+      setSpSlug(it.slug || '');
+      setSpContent(it.content || '');
+      setSpStatus(it.status || 'inactive');
+      const el = document.getElementById('strategic-plan-table-container'); if (el) el.scrollIntoView({ behavior: 'smooth' });
+    } catch (err) { console.error(err); alert('Load failed'); }
+  };
+
+  const handleDeleteStrategicPlan = async (id) => {
+    if (!window.confirm('Delete strategic plan item?')) return;
+    try {
+      const dres = await fetch(`http://localhost:4000/api/strategic-plan/${id}`, { method: 'DELETE' });
+      if (!dres.ok) throw new Error('Delete failed');
+      alert('Deleted');
+      await loadStrategicPlan();
+    } catch (err) { console.error(err); alert('Delete failed'); }
+  };
+
   useEffect(() => {
     if (isSuperAdmin) loadLeadership();
     if (isSuperAdmin) loadAffiliates();
     if (isSuperAdmin) loadPolicies();
+    if (isSuperAdmin) loadStrategicPlan();
   }, [isSuperAdmin]);
 
   useEffect(() => {
@@ -440,6 +484,14 @@ export default function StaffDashboard({ onLogout }) {
                   <FileProtectOutlined className="menu-icon" /> Policies Mgmt
                 </button>
               )}
+              {isSuperAdmin && (
+                <button 
+                  className={`menu-item ${activeTab === 'strategicplan-mgmt' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('strategicplan-mgmt')}
+                >
+                  <ProjectOutlined className="menu-icon" /> Strategic Plan Mgmt
+                </button>
+              )}
 
             <div className="menu-divider"></div>
 
@@ -482,6 +534,19 @@ export default function StaffDashboard({ onLogout }) {
                 ) : (
                   <a href="/policies" className="portal-link" onClick={() => setWebPortalOpen(false)}>
                     <FileProtectOutlined className="portal-icon" /> ETUSL Policies
+                  </a>
+                )}
+                {isSuperAdmin ? (
+                  <button
+                    className="portal-link"
+                    onClick={() => { setActiveTab('strategicplan-mgmt'); setWebPortalOpen(false); }}
+                    style={{ border: 'none', background: 'none', textAlign: 'left', padding: '12px 20px', width: '100%', cursor: 'pointer' }}
+                  >
+                    <ProjectOutlined className="portal-icon" /> Strategic Plan
+                  </button>
+                ) : (
+                  <a href="/strategic-plan" className="portal-link" onClick={() => setWebPortalOpen(false)}>
+                    <ProjectOutlined className="portal-icon" /> Strategic Plan
                   </a>
                 )}
                 <button 
@@ -712,7 +777,78 @@ export default function StaffDashboard({ onLogout }) {
               </div>
             </div>
           )}
-          {activeTab === 'affiliates-mgmt' && isSuperAdmin && (
+          {activeTab === 'strategicplan-mgmt' && isSuperAdmin && (
+            <div className="tab-content strategicplan-mgmt-tab">
+              <h2>University Strategic Plan Management</h2>
+              <p style={{ color: '#666' }}>Add, edit, or manage strategic plan milestones and phases.</p>
+
+              <div className="sp-form" style={{ marginTop: 16, marginBottom: 24 }}>
+                <h3>Add / Edit Strategic Plan Item</h3>
+                <input type="text" value={spTitle} onChange={e => setSpTitle(e.target.value)} placeholder="Milestone Title" style={{ display: 'block', width: '100%', padding: 8, marginBottom: 8 }} />
+                <input type="text" value={spSlug} onChange={e => setSpSlug(e.target.value)} placeholder="Slug (optional)" style={{ display: 'block', width: '100%', padding: 8, marginBottom: 8 }} />
+                <select value={spStatus} onChange={e => setSpStatus(e.target.value)} style={{ display: 'block', width: '100%', padding: 8, marginBottom: 8 }}>
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
+                </select>
+                <label style={{ display: 'block', marginBottom: 6, fontWeight: 600 }}>Strategic Plan Content</label>
+                <textarea value={spContent} onChange={e => setSpContent(e.target.value)} placeholder="Milestone details and content" rows={8} style={{ display: 'block', width: '100%', padding: 8, marginBottom: 12 }} />
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button onClick={async () => {
+                    if (!spTitle) return alert('Please provide a title');
+                    try {
+                      const body = { title: spTitle, slug: spSlug, content: spContent, status: spStatus, author_id: staff.id, author_name: staff.name };
+                      if (editingSpId) {
+                        const res = await fetch(`http://localhost:4000/api/strategic-plan/${editingSpId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+                        if (!res.ok) throw new Error('Update failed');
+                        alert('Updated');
+                        setEditingSpId(null);
+                      } else {
+                        const res = await fetch('http://localhost:4000/api/strategic-plan', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+                        if (!res.ok) throw new Error('Create failed');
+                        alert('Created');
+                      }
+                      setSpTitle(''); setSpSlug(''); setSpContent(''); setSpStatus('inactive');
+                      await loadStrategicPlan();
+                    } catch (err) { console.error(err); alert('Save failed'); }
+                  }} className="submit-btn">{editingSpId ? 'Save Changes' : 'Add'}</button>
+                  {editingSpId && (
+                    <button onClick={() => { setEditingSpId(null); setSpTitle(''); setSpSlug(''); setSpContent(''); setSpStatus('inactive'); }}>Cancel</button>
+                  )}
+                </div>
+              </div>
+
+              <div className="sp-list">
+                <h3>Existing Strategic Plan Items</h3>
+                <div id="strategic-plan-table-container" style={{ marginTop: 12 }}>
+                  {strategicPlanItems.length === 0 ? (
+                    <p>No strategic plan items yet.</p>
+                  ) : (
+                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                      <thead>
+                        <tr>
+                          <th style={{ textAlign: 'left', padding: 8 }}>Title</th>
+                          <th style={{ textAlign: 'left', padding: 8 }}>Status</th>
+                          <th style={{ textAlign: 'left', padding: 8 }}>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {strategicPlanItems.map(p => (
+                          <tr key={p.id}>
+                            <td style={{ padding: 8 }}>{p.title}</td>
+                            <td style={{ padding: 8 }}>{p.status}</td>
+                            <td style={{ padding: 8 }}>
+                              <button onClick={() => handleEditStrategicPlan(p.id)} style={{ marginRight: 8 }}>Edit</button>
+                              <button onClick={() => handleDeleteStrategicPlan(p.id)}>Delete</button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
             <div className="tab-content affiliates-mgmt-tab">
               <h2>Affiliates & Partners Management</h2>
               <p style={{ color: '#666' }}>Add, edit, or remove affiliates and partners visible on the public Affiliates & Partners page.</p>

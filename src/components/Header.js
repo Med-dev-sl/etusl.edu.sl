@@ -54,6 +54,12 @@ function Header({ onNavigate }) {
                   <li><Link to="/policies" onClick={() => handleNavClick('about')}>University Policies</Link></li>
                   <li><Link to="/strategic-plan" onClick={() => handleNavClick('about')}>University Strategic Plan</Link></li>
                   <li><Link to="/partners" onClick={() => handleNavClick('about')}>Affiliate & Partners</Link></li>
+                  <li className="dropdown-divider"></li>
+                  <li><Link to="/faculties" onClick={() => handleNavClick('about')}>Faculties</Link></li>
+                  <li><a href="#programs" onClick={() => handleNavClick('about')}>Programmes</a></li>
+                  <li><a href="#calendar" onClick={() => handleNavClick('about')}>Academic Calendar</a></li>
+                  <li><a href="#library" onClick={() => handleNavClick('about')}>Library</a></li>
+                  <li><a href="#fees" onClick={() => handleNavClick('about')}>Fees Structure</a></li>
                 </ul>
               </li>
               <li><a href="#programs">Programs</a></li>

@@ -62,15 +62,17 @@ export default function Policies() {
           {!loading && !error && items.length > 0 && (
             <div className="policies-grid">
               {items.map((p, index) => (
-                <article key={p.id} className="policy-card">
-                  <div className="policy-header">
+                <div key={p.id} className="policy-card">
+                  <div className="policy-card-content">
+                    <span className="policy-badge">Policy {index + 1}</span>
                     <h2 className="policy-title">{p.title}</h2>
-                    <span className="policy-number">Policy {index + 1}</span>
-                  </div>
-                  <div className="policy-body">
+                    <div className="policy-separator"></div>
                     <p className="policy-content">{p.content}</p>
+                    <div className="policy-footer">
+                      <button className="read-more-btn">Read Full Policy</button>
+                    </div>
                   </div>
-                </article>
+                </div>
               ))}
             </div>
           )}
