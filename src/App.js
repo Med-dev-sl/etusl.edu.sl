@@ -25,6 +25,7 @@ import Faculties from './pages/faculties/Faculties';
 import Jobs from './pages/Jobs';
 import AssetsRegister from './pages/AssetsRegister';
 
+import FacultiesPublic from './pages/faculties/FacultiesPublic';
 function App() {
   const [currentPage, setCurrentPage] = useState('home');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -61,7 +62,7 @@ function App() {
         />
         <Route path="/announcements" element={<Announcements />} />
         <Route path="/news-events" element={<NewsEvents />} />
-        <Route path="/faculties" element={<Faculties />} />
+        <Route path="/faculties" element={<FacultiesPublic />} />
         <Route path="/about" element={<About />} />
         <Route path="/leadership" element={<Leadership />} />
         <Route path="/partners" element={<Partners />} />
