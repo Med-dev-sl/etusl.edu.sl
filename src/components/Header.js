@@ -57,7 +57,7 @@ function Header({ onNavigate }) {
                   <li><Link to="/partners" onClick={() => handleNavClick('about')}>Affiliate & Partners</Link></li>
                 </ul>
               </li>
-              <li><a href="#programs">Programs</a></li>
+              <li><Link to="/programmes" onClick={() => handleNavClick('programmes')}>Programs</Link></li>
               <li><a href="#admissions">Admissions</a></li>
               <li className={`dropdown academics-dropdown ${academicsOpen ? 'active' : ''}`}
                   onMouseEnter={() => setAcademicsOpen(true)}
@@ -68,9 +68,9 @@ function Header({ onNavigate }) {
                 </a>
                 <ul className={`dropdown-menu ${academicsOpen ? 'active' : ''}`}>
                   <li><Link to="/faculties" onClick={() => handleNavClick('academics')}>Faculties</Link></li>
-                  <li><a href="#programmes">Programmes</a></li>
-                  <li><a href="#calendar">Academic Calendar</a></li>
-                  <li><a href="#library">Library</a></li>
+                  <li><Link to="/programmes" onClick={() => handleNavClick('academics')}>Programmes</Link></li>
+                  <li><Link to="/academic-calendar" onClick={() => handleNavClick('academics')}>Academic Calendar</Link></li>
+                  <li><Link to="/library" onClick={() => handleNavClick('academics')}>Library</Link></li>
                   <li><a href="#fees">Fees Structure</a></li>
                 </ul>
               </li>

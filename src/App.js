@@ -24,6 +24,9 @@ import NewsEvents from './pages/newsevents/NewsEvents';
 import Faculties from './pages/faculties/Faculties';
 import Jobs from './pages/Jobs';
 import AssetsRegister from './pages/AssetsRegister';
+import ProgrammesPublic from './pages/programmes/ProgrammesPublic';
+import AcademicCalendar from './pages/academics/AcademicCalendar';
+import Library from './pages/academics/Library';
 
 import FacultiesPublic from './pages/faculties/FacultiesPublic';
 function App() {
@@ -70,6 +73,9 @@ function App() {
         <Route path="/strategic-plan" element={<StrategicPlan />} />
         <Route path="/jobs" element={<Jobs />} />
         <Route path="/assets" element={<AssetsRegister />} />
+        <Route path="/programmes" element={<ProgrammesPublic />} />
+        <Route path="/academic-calendar" element={<AcademicCalendar />} />
+        <Route path="/library" element={<Library />} />
 
         {/* Main App Routes */}
         <Route

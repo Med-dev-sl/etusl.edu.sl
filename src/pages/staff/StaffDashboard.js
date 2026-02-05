@@ -78,7 +78,26 @@ export default function StaffDashboard({ onLogout }) {
   const [policyContent, setPolicyContent] = useState('');
   const [policyStatus, setPolicyStatus] = useState('inactive');
   const [editingPolicyId, setEditingPolicyId] = useState(null);
+  const [programmesItems, setProgrammesItems] = useState([]);
+  const [progCode, setProgCode] = useState('');
+  const [progTitle, setProgTitle] = useState('');
+  const [progLevel, setProgLevel] = useState('undergraduate');
+  const [progFacultyId, setProgFacultyId] = useState(null);
+  const [progFacultyName, setProgFacultyName] = useState('');
+  const [progDuration, setProgDuration] = useState('');
+  const [progDescription, setProgDescription] = useState('');
+  const [progStatus, setProgStatus] = useState('active');
+  const [editingProgId, setEditingProgId] = useState(null);
+  const [facultiesList, setFacultiesList] = useState([]);
   const [strategicPlanItems, setStrategicPlanItems] = useState([]);
+  const [academicCalendarItems, setAcademicCalendarItems] = useState([]);
+  const [acTitle, setAcTitle] = useState('');
+  const [acType, setAcType] = useState('Event');
+  const [acStart, setAcStart] = useState('');
+  const [acEnd, setAcEnd] = useState('');
+  const [acDescription, setAcDescription] = useState('');
+  const [acStatus, setAcStatus] = useState('active');
+  const [editingAcId, setEditingAcId] = useState(null);
   const [spTitle, setSpTitle] = useState('');
   const [spSlug, setSpSlug] = useState('');
   const [spContent, setSpContent] = useState('');
@@ -270,6 +289,8 @@ export default function StaffDashboard({ onLogout }) {
     if (isSuperAdmin) loadLeadership();
     if (isSuperAdmin) loadAffiliates();
     if (isSuperAdmin) loadPolicies();
+    if (isSuperAdmin) loadProgrammes();
+    if (isSuperAdmin) loadFacultiesList();
     if (isSuperAdmin) loadStrategicPlan();
   }, [isSuperAdmin]);
 
@@ -287,6 +308,89 @@ export default function StaffDashboard({ onLogout }) {
     } catch (err) {
       console.error('Failed to fetch staff:', err);
     }
+  };
+
+  const loadFacultiesList = async () => {
+    try {
+      const res = await fetch('http://localhost:4000/api/faculties');
+      if (!res.ok) return setFacultiesList([]);
+      const data = await res.json();
+      setFacultiesList(data.faculties || data.items || []);
+    } catch (err) { console.error('Failed to load faculties', err); setFacultiesList([]); }
+  };
+
+  const loadProgrammes = async () => {
+    try {
+      const res = await fetch('http://localhost:4000/api/programs');
+      if (!res.ok) return setProgrammesItems([]);
+      const data = await res.json();
+      setProgrammesItems(data.programmes || data.items || []);
+    } catch (err) { console.error('Failed to load programmes', err); setProgrammesItems([]); }
+  };
+
+  const loadAcademicCalendar = async () => {
+    try {
+      const res = await fetch('http://localhost:4000/api/academic-calendar');
+      if (!res.ok) return setAcademicCalendarItems([]);
+      const data = await res.json();
+      setAcademicCalendarItems(data.items || []);
+    } catch (err) { console.error('Failed to load academic calendar', err); setAcademicCalendarItems([]); }
+  };
+
+  const handleEditAcademic = async (id) => {
+    try {
+      const r = await fetch(`http://localhost:4000/api/academic-calendar/${id}`);
+      if (!r.ok) throw new Error('Load failed');
+      const dd = await r.json();
+      const it = dd.item;
+      setEditingAcId(it.id);
+      setAcTitle(it.title || '');
+      setAcType(it.type || 'Event');
+      setAcStart(it.start_date || '');
+      setAcEnd(it.end_date || '');
+      setAcDescription(it.description || '');
+      setAcStatus(it.status || 'active');
+      const el = document.getElementById('academic-calendar-table'); if (el) el.scrollIntoView({ behavior: 'smooth' });
+    } catch (err) { console.error(err); alert('Load failed'); }
+  };
+
+  const handleDeleteAcademic = async (id) => {
+    if (!window.confirm('Delete calendar item?')) return;
+    try {
+      const dres = await fetch(`http://localhost:4000/api/academic-calendar/${id}`, { method: 'DELETE' });
+      if (!dres.ok) throw new Error('Delete failed');
+      alert('Deleted');
+      await loadAcademicCalendar();
+    } catch (err) { console.error(err); alert('Delete failed'); }
+  };
+
+  const handleEditProgramme = async (id) => {
+    try {
+      const r = await fetch(`http://localhost:4000/api/programs/${id}`);
+      if (!r.ok) throw new Error('Failed to load');
+      const dd = await r.json();
+      const it = dd.programme || dd.item;
+      setEditingProgId(it.id);
+      setProgCode(it.code || '');
+      setProgTitle(it.title || '');
+      setProgLevel(it.level || 'undergraduate');
+      setProgFacultyId(it.faculty_id || null);
+      setProgFacultyName(it.faculty_name || '');
+      setProgDuration(it.duration || '');
+      setProgDescription(it.description || '');
+      setProgStatus(it.status || 'inactive');
+      const el = document.getElementById('programmes-table-container'); if (el) el.scrollIntoView({ behavior: 'smooth' });
+    } catch (err) { console.error(err); alert('Load failed'); }
+  };
+
+  const handleDeleteProgramme = async (id) => {
+    if (!window.confirm('Delete programme?')) return;
+    try {
+      const dres = await fetch(`http://localhost:4000/api/programs/${id}`, { method: 'DELETE' });
+      if (!dres.ok) throw new Error('Delete failed');
+      alert('Deleted');
+      await loadProgrammes();
+    } catch (err) { console.error(err); alert('Delete failed'); }
   };
 
   const handlePhotoChange = (e) => {
@@ -478,6 +582,14 @@ export default function StaffDashboard({ onLogout }) {
               )}
               {isSuperAdmin && (
                 <button
+                  className={`menu-item ${activeTab === 'programmes-mgmt' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('programmes-mgmt')}
+                >
+                  <BookOutlined className="menu-icon" /> Programmes Mgmt
+                </button>
+              )}
+              {isSuperAdmin && (
+                <button
                   className={`menu-item ${activeTab === 'policies-mgmt' ? 'active' : ''}`}
                   onClick={() => setActiveTab('policies-mgmt')}
                 >
@@ -547,6 +659,19 @@ export default function StaffDashboard({ onLogout }) {
                 ) : (
                   <a href="/strategic-plan" className="portal-link" onClick={() => setWebPortalOpen(false)}>
                     <ProjectOutlined className="portal-icon" /> Strategic Plan
+                  </a>
+                )}
+                {isSuperAdmin ? (
+                  <button
+                    className="portal-link"
+                    onClick={() => { setActiveTab('academic-calendar-mgmt'); setWebPortalOpen(false); }}
+                    style={{ border: 'none', background: 'none', textAlign: 'left', padding: '12px 20px', width: '100%', cursor: 'pointer' }}
+                  >
+                    <CalendarOutlined className="portal-icon" /> Academic Calendar
+                  </button>
+                ) : (
+                  <a href="/academic-calendar" className="portal-link" onClick={() => setWebPortalOpen(false)}>
+                    <CalendarOutlined className="portal-icon" /> Academic Calendar
                   </a>
                 )}
                 <button 
@@ -839,6 +964,167 @@ export default function StaffDashboard({ onLogout }) {
                             <td style={{ padding: 8 }}>
                               <button onClick={() => handleEditStrategicPlan(p.id)} style={{ marginRight: 8 }}>Edit</button>
                               <button onClick={() => handleDeleteStrategicPlan(p.id)}>Delete</button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+          {activeTab === 'programmes-mgmt' && isSuperAdmin && (
+            <div className="tab-content programmes-mgmt-tab">
+              <h2>Programmes Management</h2>
+              <p style={{ color: '#666' }}>Add, edit, or remove academic programmes.</p>
+
+              <div className="programme-form" style={{ marginTop: 16, marginBottom: 24 }}>
+                <h3>{editingProgId ? 'Edit Programme' : 'Add Programme'}</h3>
+                <input type="text" value={progCode} onChange={e => setProgCode(e.target.value)} placeholder="Code (e.g. BScCS)" style={{ display: 'block', width: '100%', padding: 8, marginBottom: 8 }} />
+                <input type="text" value={progTitle} onChange={e => setProgTitle(e.target.value)} placeholder="Programme title" style={{ display: 'block', width: '100%', padding: 8, marginBottom: 8 }} />
+                <select value={progLevel} onChange={e => setProgLevel(e.target.value)} style={{ display: 'block', width: '100%', padding: 8, marginBottom: 8 }}>
+                  <option value="undergraduate">Undergraduate</option>
+                  <option value="postgraduate">Postgraduate</option>
+                  <option value="certificate">Certificate</option>
+                </select>
+                <select value={progFacultyId || ''} onChange={e=> { const id = e.target.value; setProgFacultyId(id || null); const f = facultiesList.find(x=>String(x.id)===String(id)); setProgFacultyName(f? f.name : ''); }} style={{ display: 'block', width: '100%', padding: 8, marginBottom: 8 }}>
+                  <option value="">Select Faculty (optional)</option>
+                  {facultiesList.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
+                </select>
+                <input type="text" value={progDuration} onChange={e => setProgDuration(e.target.value)} placeholder="Duration (e.g. 4 years)" style={{ display: 'block', width: '100%', padding: 8, marginBottom: 8 }} />
+                <label style={{ display: 'block', marginBottom: 6, fontWeight: 600 }}>Description</label>
+                <textarea value={progDescription} onChange={e => setProgDescription(e.target.value)} rows={6} style={{ display: 'block', width: '100%', padding: 8, marginBottom: 8 }} />
+                <select value={progStatus} onChange={e => setProgStatus(e.target.value)} style={{ display: 'block', width: '100%', padding: 8, marginBottom: 8 }}>
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
+                </select>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button onClick={async () => {
+                    if (!progTitle || !progCode) return alert('Please provide code and title');
+                    try {
+                      const body = { code: progCode, title: progTitle, level: progLevel, faculty_id: progFacultyId, faculty_name: progFacultyName, duration: progDuration, description: progDescription, status: progStatus, author_id: staff.id, author_name: staff.name };
+                      if (editingProgId) {
+                        const res = await fetch(`http://localhost:4000/api/programs/${editingProgId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+                        if (!res.ok) throw new Error('Update failed');
+                        alert('Updated');
+                        setEditingProgId(null);
+                      } else {
+                        const res = await fetch('http://localhost:4000/api/programs', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+                        if (!res.ok) throw new Error('Create failed');
+                        alert('Created');
+                      }
+                      setProgCode(''); setProgTitle(''); setProgLevel('undergraduate'); setProgFacultyId(null); setProgFacultyName(''); setProgDuration(''); setProgDescription(''); setProgStatus('active');
+                      await loadProgrammes();
+                    } catch (err) { console.error(err); alert('Save failed'); }
+                  }} className="submit-btn">{editingProgId ? 'Save Changes' : 'Add'}</button>
+
+                  {editingProgId && (
+                    <button onClick={() => { setEditingProgId(null); setProgCode(''); setProgTitle(''); setProgLevel('undergraduate'); setProgFacultyId(null); setProgFacultyName(''); setProgDuration(''); setProgDescription(''); setProgStatus('active'); }}>Cancel</button>
+                  )}
+                </div>
+              </div>
+
+              <div className="programme-list">
+                <h3>Existing Programmes</h3>
+                <div id="programmes-table-container" style={{ marginTop: 12 }}>
+                  {programmesItems.length === 0 ? (
+                    <p>No programmes yet.</p>
+                  ) : (
+                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                      <thead>
+                        <tr>
+                          <th style={{ textAlign: 'left', padding: 8 }}>Code</th>
+                          <th style={{ textAlign: 'left', padding: 8 }}>Title</th>
+                          <th style={{ textAlign: 'left', padding: 8 }}>Level</th>
+                          <th style={{ textAlign: 'left', padding: 8 }}>Faculty</th>
+                          <th style={{ textAlign: 'left', padding: 8 }}>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {programmesItems.map(p => (
+                          <tr key={p.id}>
+                            <td style={{ padding: 8 }}>{p.code}</td>
+                            <td style={{ padding: 8 }}>{p.title}</td>
+                            <td style={{ padding: 8 }}>{p.level}</td>
+                            <td style={{ padding: 8 }}>{p.faculty_name}</td>
+                            <td style={{ padding: 8 }}>
+                              <button onClick={() => handleEditProgramme(p.id)} style={{ marginRight: 8 }}>Edit</button>
+                              <button onClick={() => handleDeleteProgramme(p.id)}>Delete</button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+          {activeTab === 'academic-calendar-mgmt' && isSuperAdmin && (
+            <div className="tab-content academic-calendar-mgmt-tab">
+              <h2>Academic Calendar Management</h2>
+              <p style={{ color: '#666' }}>Add, edit, or remove academic calendar entries.</p>
+
+              <div className="ac-form" style={{ marginTop: 16, marginBottom: 24 }}>
+                <h3>{editingAcId ? 'Edit Calendar Item' : 'Add Calendar Item'}</h3>
+                <input type="text" value={acTitle} onChange={e=>setAcTitle(e.target.value)} placeholder="Title" style={{ display: 'block', width: '100%', padding: 8, marginBottom: 8 }} />
+                <input type="text" value={acType} onChange={e=>setAcType(e.target.value)} placeholder="Type (Event/Exam/Registration)" style={{ display: 'block', width: '100%', padding: 8, marginBottom: 8 }} />
+                <label>Start date</label>
+                <input type="date" value={acStart || ''} onChange={e=>setAcStart(e.target.value)} style={{ display: 'block', width: '100%', padding: 8, marginBottom: 8 }} />
+                <label>End date (optional)</label>
+                <input type="date" value={acEnd || ''} onChange={e=>setAcEnd(e.target.value)} style={{ display: 'block', width: '100%', padding: 8, marginBottom: 8 }} />
+                <label style={{ display: 'block', marginBottom: 6, fontWeight: 600 }}>Description</label>
+                <textarea value={acDescription} onChange={e=>setAcDescription(e.target.value)} rows={6} style={{ display: 'block', width: '100%', padding: 8, marginBottom: 8 }} />
+                <select value={acStatus} onChange={e=>setAcStatus(e.target.value)} style={{ display: 'block', width: '100%', padding: 8, marginBottom: 8 }}>
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
+                </select>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button onClick={async () => {
+                    if (!acTitle) return alert('Please provide a title');
+                    try {
+                      const body = { title: acTitle, type: acType, start_date: acStart || null, end_date: acEnd || null, description: acDescription, status: acStatus };
+                      if (editingAcId) {
+                        const res = await fetch(`http://localhost:4000/api/academic-calendar/${editingAcId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+                        if (!res.ok) throw new Error('Update failed');
+                        alert('Updated');
+                        setEditingAcId(null);
+                      } else {
+                        const res = await fetch('http://localhost:4000/api/academic-calendar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+                        if (!res.ok) throw new Error('Create failed');
+                        alert('Created');
+                      }
+                      setAcTitle(''); setAcType('Event'); setAcStart(''); setAcEnd(''); setAcDescription(''); setAcStatus('active');
+                      await loadAcademicCalendar();
+                    } catch (err) { console.error(err); alert('Save failed'); }
+                  }} className="submit-btn">{editingAcId ? 'Save Changes' : 'Add'}</button>
+                  {editingAcId && (<button onClick={() => { setEditingAcId(null); setAcTitle(''); setAcType('Event'); setAcStart(''); setAcEnd(''); setAcDescription(''); setAcStatus('active'); }}>Cancel</button>)}
+                </div>
+              </div>
+
+              <div className="ac-list-management">
+                <h3>Existing Items</h3>
+                <div id="academic-calendar-table" style={{ marginTop: 12 }}>
+                  {academicCalendarItems.length === 0 ? <p>No items yet.</p> : (
+                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                      <thead>
+                        <tr>
+                          <th style={{ textAlign: 'left', padding: 8 }}>Title</th>
+                          <th style={{ textAlign: 'left', padding: 8 }}>Dates</th>
+                          <th style={{ textAlign: 'left', padding: 8 }}>Type</th>
+                          <th style={{ textAlign: 'left', padding: 8 }}>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {academicCalendarItems.map(a => (
+                          <tr key={a.id}>
+                            <td style={{ padding: 8 }}>{a.title}</td>
+                            <td style={{ padding: 8 }}>{a.start_date || ''}{a.end_date ? ` — ${a.end_date}` : ''}</td>
+                            <td style={{ padding: 8 }}>{a.type}</td>
+                            <td style={{ padding: 8 }}>
+                              <button onClick={() => handleEditAcademic(a.id)} style={{ marginRight: 8 }}>Edit</button>
+                              <button onClick={() => handleDeleteAcademic(a.id)}>Delete</button>
                             </td>
                           </tr>
                         ))}

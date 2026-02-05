@@ -32,6 +32,77 @@ const storage = multer.diskStorage({
   }
 });
 
+// ===== PROGRAMMES API =====
+// Public: active programmes with basic fields
+app.get('/api/programs/active', async (req, res) => {
+  try {
+    const rows = await query("SELECT id, code, title, level, faculty_id, faculty_name, duration, description FROM programmes WHERE status = 'active' ORDER BY title");
+    res.json({ programmes: rows });
+  } catch (err) {
+    console.error('Error fetching active programmes:', err);
+    res.status(500).json({ error: 'Database error', detail: err.message });
+  }
+});
+
+// Admin: list all programmes
+app.get('/api/programs', async (req, res) => {
+  try {
+    const rows = await query('SELECT id, code, title, level, faculty_id, faculty_name, duration, status, author_name, created_at FROM programmes ORDER BY id DESC');
+    res.json({ programmes: rows });
+  } catch (err) {
+    console.error('Error listing programmes:', err);
+    res.status(500).json({ error: 'Database error', detail: err.message });
+  }
+});
+
+// Get single programme
+app.get('/api/programs/:id', async (req, res) => {
+  try {
+    const rows = await query('SELECT id, code, title, level, faculty_id, faculty_name, duration, description, status, author_id, author_name FROM programmes WHERE id = ?', [req.params.id]);
+    if (rows.length === 0) return res.status(404).json({ error: 'Programme not found' });
+    res.json({ programme: rows[0] });
+  } catch (err) {
+    console.error('Error fetching programme:', err);
+    res.status(500).json({ error: 'Database error', detail: err.message });
+  }
+});
+
+// Create programme (admin)
+app.post('/api/programs', async (req, res) => {
+  const { code, title, level = 'undergraduate', faculty_id = null, faculty_name = '', duration = '', description = '', status = 'inactive', author_id = 1, author_name = 'System' } = req.body;
+  if (!title || !code) return res.status(400).json({ error: 'code and title required' });
+  try {
+    const result = await query('INSERT INTO programmes (code, title, level, faculty_id, faculty_name, duration, description, status, author_id, author_name) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', [code, title, level, faculty_id, faculty_name, duration, description, status, author_id, author_name]);
+    res.status(201).json({ message: 'Programme created', id: result.insertId });
+  } catch (err) {
+    console.error('Error creating programme:', err);
+    res.status(500).json({ error: 'Database error', detail: err.message });
+  }
+});
+
+// Update programme
+app.put('/api/programs/:id', async (req, res) => {
+  const { code, title, level, faculty_id = null, faculty_name = '', duration = '', description = '', status = 'inactive' } = req.body;
+  try {
+    await query('UPDATE programmes SET code = ?, title = ?, level = ?, faculty_id = ?, faculty_name = ?, duration = ?, description = ?, status = ? WHERE id = ?', [code, title, level, faculty_id, faculty_name, duration, description, status, req.params.id]);
+    res.json({ message: 'Programme updated' });
+  } catch (err) {
+    console.error('Error updating programme:', err);
+    res.status(500).json({ error: 'Database error', detail: err.message });
+  }
+});
+
+// Delete programme
+app.delete('/api/programs/:id', async (req, res) => {
+  try {
+    await query('DELETE FROM programmes WHERE id = ?', [req.params.id]);
+    res.json({ message: 'Programme deleted' });
+  } catch (err) {
+    console.error('Error deleting programme:', err);
+    res.status(500).json({ error: 'Database error', detail: err.message });
+  }
+});
+
 const upload = multer({
   storage: storage,
   limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
@@ -799,6 +870,77 @@ app.put('/api/policies/:id', async (req, res) => {
   }
 });
 
+// ===== ACADEMIC CALENDAR API =====
+// Public: active calendar items
+app.get('/api/academic-calendar/active', async (req, res) => {
+  try {
+    const rows = await query("SELECT id, title, type, start_date, end_date, description FROM academic_calendar WHERE status = 'active' ORDER BY start_date");
+    res.json({ items: rows });
+  } catch (err) {
+    console.error('Error fetching academic calendar:', err);
+    res.status(500).json({ error: 'Database error', detail: err.message });
+  }
+});
+
+// Admin: list all calendar items
+app.get('/api/academic-calendar', async (req, res) => {
+  try {
+    const rows = await query('SELECT id, title, type, start_date, end_date, description, status, created_at FROM academic_calendar ORDER BY start_date DESC');
+    res.json({ items: rows });
+  } catch (err) {
+    console.error('Error listing academic calendar:', err);
+    res.status(500).json({ error: 'Database error', detail: err.message });
+  }
+});
+
+// Get single calendar item
+app.get('/api/academic-calendar/:id', async (req, res) => {
+  try {
+    const rows = await query('SELECT id, title, type, start_date, end_date, description, status FROM academic_calendar WHERE id = ?', [req.params.id]);
+    if (rows.length === 0) return res.status(404).json({ error: 'Not found' });
+    res.json({ item: rows[0] });
+  } catch (err) {
+    console.error('Error fetching calendar item:', err);
+    res.status(500).json({ error: 'Database error', detail: err.message });
+  }
+});
+
+// Create calendar item
+app.post('/api/academic-calendar', async (req, res) => {
+  const { title, type = 'Event', start_date = null, end_date = null, description = '', status = 'active' } = req.body;
+  if (!title) return res.status(400).json({ error: 'title required' });
+  try {
+    const result = await query('INSERT INTO academic_calendar (title, type, start_date, end_date, description, status) VALUES (?, ?, ?, ?, ?, ?)', [title, type, start_date, end_date, description, status]);
+    res.status(201).json({ message: 'Calendar item created', id: result.insertId });
+  } catch (err) {
+    console.error('Error creating calendar item:', err);
+    res.status(500).json({ error: 'Database error', detail: err.message });
+  }
+});
+
+// Update calendar item
+app.put('/api/academic-calendar/:id', async (req, res) => {
+  const { title, type = 'Event', start_date = null, end_date = null, description = '', status = 'active' } = req.body;
+  try {
+    await query('UPDATE academic_calendar SET title = ?, type = ?, start_date = ?, end_date = ?, description = ?, status = ? WHERE id = ?', [title, type, start_date, end_date, description, status, req.params.id]);
+    res.json({ message: 'Calendar item updated' });
+  } catch (err) {
+    console.error('Error updating calendar item:', err);
+    res.status(500).json({ error: 'Database error', detail: err.message });
+  }
+});
+
+// Delete calendar item
+app.delete('/api/academic-calendar/:id', async (req, res) => {
+  try {
+    await query('DELETE FROM academic_calendar WHERE id = ?', [req.params.id]);
+    res.json({ message: 'Calendar item deleted' });
+  } catch (err) {
+    console.error('Error deleting calendar item:', err);
+    res.status(500).json({ error: 'Database error', detail: err.message });
+  }
+});
+
 // Delete policy
 app.delete('/api/policies/:id', async (req, res) => {
   try {
@@ -1129,6 +1271,171 @@ app.put('/api/about', async (req, res) => {
     res.json({ message: 'About content updated' });
   } catch (err) {
     console.error('Error updating about content:', err);
+    res.status(500).json({ error: 'Database error', detail: err.message });
+  }
+});
+
+// ===== LIBRARY API =====
+// Get all library items
+app.get('/api/library', async (req, res) => {
+  try {
+    const rows = await query('SELECT id, title, type, author, isbn, year, course, subject, faculty_id, faculty_name, level, description, file_path, status, created_at FROM library WHERE status = "active" ORDER BY title');
+    res.json({ items: rows });
+  } catch (err) {
+    console.error('Error fetching library items:', err);
+    res.status(500).json({ error: 'Database error', detail: err.message });
+  }
+});
+
+// Get single library item
+app.get('/api/library/:id', async (req, res) => {
+  try {
+    const rows = await query('SELECT id, title, type, author, isbn, year, course, subject, faculty_id, faculty_name, level, description, file_path, status FROM library WHERE id = ?', [req.params.id]);
+    if (rows.length === 0) return res.status(404).json({ error: 'Not found' });
+    res.json({ item: rows[0] });
+  } catch (err) {
+    console.error('Error fetching library item:', err);
+    res.status(500).json({ error: 'Database error', detail: err.message });
+  }
+});
+
+// Get library items by type (books or past-papers)
+app.get('/api/library/type/:type', async (req, res) => {
+  const { type } = req.params;
+  if (!['books', 'past-papers'].includes(type)) {
+    return res.status(400).json({ error: 'Invalid type' });
+  }
+  try {
+    const rows = await query('SELECT id, title, type, author, isbn, year, course, subject, faculty_id, faculty_name, level, description, file_path, status FROM library WHERE type = ? AND status = "active" ORDER BY title', [type]);
+    res.json({ items: rows });
+  } catch (err) {
+    console.error('Error fetching library items:', err);
+    res.status(500).json({ error: 'Database error', detail: err.message });
+  }
+});
+
+// Get library items by faculty
+app.get('/api/library/faculty/:facultyId', async (req, res) => {
+  try {
+    const rows = await query('SELECT id, title, type, author, isbn, year, course, subject, faculty_id, faculty_name, level, description, file_path, status FROM library WHERE faculty_id = ? AND status = "active" ORDER BY title', [req.params.facultyId]);
+    res.json({ items: rows });
+  } catch (err) {
+    console.error('Error fetching library items:', err);
+    res.status(500).json({ error: 'Database error', detail: err.message });
+  }
+});
+
+// Get library items by level
+app.get('/api/library/level/:level', async (req, res) => {
+  const { level } = req.params;
+  if (!['Undergraduate', 'Postgraduate', 'Certificate'].includes(level)) {
+    return res.status(400).json({ error: 'Invalid level' });
+  }
+  try {
+    const rows = await query('SELECT id, title, type, author, isbn, year, course, subject, faculty_id, faculty_name, level, description, file_path, status FROM library WHERE level = ? AND status = "active" ORDER BY title', [level]);
+    res.json({ items: rows });
+  } catch (err) {
+    console.error('Error fetching library items:', err);
+    res.status(500).json({ error: 'Database error', detail: err.message });
+  }
+});
+
+// Storage for library files
+const libraryStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const libraryDir = path.join(__dirname, 'uploads', 'library');
+    if (!fs.existsSync(libraryDir)) {
+      fs.mkdirSync(libraryDir, { recursive: true });
+    }
+    cb(null, libraryDir);
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname);
+    const name = path.basename(file.originalname, ext);
+    cb(null, `${name}_${Date.now()}${ext}`);
+  }
+});
+
+const libraryUpload = multer({
+  storage: libraryStorage,
+  limits: { fileSize: 50 * 1024 * 1024 }, // 50MB limit for PDFs
+  fileFilter: (req, file, cb) => {
+    const allowed = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+    if (allowed.includes(file.mimetype)) cb(null, true);
+    else cb(new Error('Only PDF and Word documents are allowed'));
+  }
+});
+
+// Create new library item (admin only)
+app.post('/api/library', libraryUpload.single('file'), async (req, res) => {
+  const { title, type = 'books', author = null, isbn = null, year = null, course = null, subject = null, faculty_id = null, faculty_name = null, level = 'Undergraduate', description = null, status = 'active' } = req.body;
+  
+  if (!title || !type) {
+    return res.status(400).json({ error: 'title and type required' });
+  }
+
+  const filePath = req.file ? `/uploads/library/${req.file.filename}` : null;
+
+  try {
+    const result = await query(
+      'INSERT INTO library (title, type, author, isbn, year, course, subject, faculty_id, faculty_name, level, description, file_path, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [title, type, author, isbn, year, course, subject, faculty_id, faculty_name, level, description, filePath, status]
+    );
+    res.status(201).json({ 
+      message: 'Library item created', 
+      id: result.insertId,
+      filePath: filePath
+    });
+  } catch (err) {
+    console.error('Error creating library item:', err);
+    res.status(500).json({ error: 'Database error', detail: err.message });
+  }
+});
+
+// Update library item (admin only)
+app.put('/api/library/:id', libraryUpload.single('file'), async (req, res) => {
+  const { title, type, author, isbn, year, course, subject, faculty_id, faculty_name, level, description, status } = req.body;
+  
+  try {
+    if (req.file) {
+      const filePath = `/uploads/library/${req.file.filename}`;
+      // Delete old file if exists
+      const rows = await query('SELECT file_path FROM library WHERE id = ?', [req.params.id]);
+      if (rows.length > 0 && rows[0].file_path) {
+        const oldPath = path.join(__dirname, rows[0].file_path);
+        if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+      }
+      await query(
+        'UPDATE library SET title = ?, type = ?, author = ?, isbn = ?, year = ?, course = ?, subject = ?, faculty_id = ?, faculty_name = ?, level = ?, description = ?, file_path = ?, status = ? WHERE id = ?',
+        [title, type, author, isbn, year, course, subject, faculty_id, faculty_name, level, description, filePath, status, req.params.id]
+      );
+    } else {
+      await query(
+        'UPDATE library SET title = ?, type = ?, author = ?, isbn = ?, year = ?, course = ?, subject = ?, faculty_id = ?, faculty_name = ?, level = ?, description = ?, status = ? WHERE id = ?',
+        [title, type, author, isbn, year, course, subject, faculty_id, faculty_name, level, description, status, req.params.id]
+      );
+    }
+    res.json({ message: 'Library item updated' });
+  } catch (err) {
+    console.error('Error updating library item:', err);
+    res.status(500).json({ error: 'Database error', detail: err.message });
+  }
+});
+
+// Delete library item (admin only)
+app.delete('/api/library/:id', async (req, res) => {
+  try {
+    // Get file path to delete file
+    const rows = await query('SELECT file_path FROM library WHERE id = ?', [req.params.id]);
+    if (rows.length > 0 && rows[0].file_path) {
+      const filePath = path.join(__dirname, rows[0].file_path);
+      if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+    }
+    
+    await query('DELETE FROM library WHERE id = ?', [req.params.id]);
+    res.json({ message: 'Library item deleted' });
+  } catch (err) {
+    console.error('Error deleting library item:', err);
     res.status(500).json({ error: 'Database error', detail: err.message });
   }
 });
