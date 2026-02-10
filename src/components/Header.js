@@ -5,6 +5,7 @@ import './Header.css';
 function Header({ onNavigate }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [admissionsOpen, setAdmissionsOpen] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
   const [academicsOpen, setAcademicsOpen] = useState(false);
 
@@ -58,7 +59,18 @@ function Header({ onNavigate }) {
                 </ul>
               </li>
               <li><Link to="/programmes" onClick={() => handleNavClick('programmes')}>Programs</Link></li>
-              <li><a href="#admissions">Admissions</a></li>
+              <li className={`dropdown admissions-dropdown ${admissionsOpen ? 'active' : ''}`}
+                  onMouseEnter={() => setAdmissionsOpen(true)}
+                  onMouseLeave={() => setAdmissionsOpen(false)}>
+                <a href="#" onClick={(e) => { e.preventDefault(); setAdmissionsOpen(!admissionsOpen); }}>
+                  Admissions
+                  <span className={`arrow ${admissionsOpen ? 'open' : ''}`}>▼</span>
+                </a>
+                <ul className={`dropdown-menu ${admissionsOpen ? 'active' : ''}`}>
+                  <li><Link to="/admissions/undergraduate" onClick={() => handleNavClick('admissions')}>Undergraduate</Link></li>
+                  <li><Link to="/admissions/postgraduate" onClick={() => handleNavClick('admissions')}>Post-Graduate</Link></li>
+                </ul>
+              </li>
               <li className={`dropdown academics-dropdown ${academicsOpen ? 'active' : ''}`}
                   onMouseEnter={() => setAcademicsOpen(true)}
                   onMouseLeave={() => setAcademicsOpen(false)}>

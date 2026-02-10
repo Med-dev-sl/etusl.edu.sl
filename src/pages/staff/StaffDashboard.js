@@ -7,10 +7,12 @@ import NewsEvents from '../newsevents/NewsEvents';
 import Faculties from '../faculties/Faculties';
 import MissionVisionManager from '../../components/MissionVisionManager';
 import HistoryManager from '../../components/HistoryManager';
+import LibraryManager from './LibraryManager';
 import {
   DashboardOutlined,
   UserOutlined,
   FileTextOutlined,
+  FileOutlined,
   TeamOutlined,
   SettingOutlined,
   CameraOutlined,
@@ -604,6 +606,14 @@ export default function StaffDashboard({ onLogout }) {
                   <ProjectOutlined className="menu-icon" /> Strategic Plan Mgmt
                 </button>
               )}
+              {isSuperAdmin && (
+                <button 
+                  className={`menu-item ${activeTab === 'library-mgmt' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('library-mgmt')}
+                >
+                  <FileOutlined className="menu-icon" /> Library Mgmt
+                </button>
+              )}
 
             <div className="menu-divider"></div>
 
@@ -672,6 +682,19 @@ export default function StaffDashboard({ onLogout }) {
                 ) : (
                   <a href="/academic-calendar" className="portal-link" onClick={() => setWebPortalOpen(false)}>
                     <CalendarOutlined className="portal-icon" /> Academic Calendar
+                  </a>
+                )}
+                {isSuperAdmin ? (
+                  <button
+                    className="portal-link"
+                    onClick={() => { setActiveTab('library-mgmt'); setWebPortalOpen(false); }}
+                    style={{ border: 'none', background: 'none', textAlign: 'left', padding: '12px 20px', width: '100%', cursor: 'pointer' }}
+                  >
+                    <BookOutlined className="portal-icon" /> Library
+                  </button>
+                ) : (
+                  <a href="/library" className="portal-link" onClick={() => setWebPortalOpen(false)}>
+                    <BookOutlined className="portal-icon" /> Library
                   </a>
                 )}
                 <button 
@@ -1135,6 +1158,12 @@ export default function StaffDashboard({ onLogout }) {
               </div>
             </div>
           )}
+
+          {activeTab === 'library-mgmt' && isSuperAdmin && (
+            <LibraryManager staffId={staff?.id} staffName={staff?.name} />
+          )}
+
+          {activeTab === 'affiliates-mgmt' && isSuperAdmin && (
             <div className="tab-content affiliates-mgmt-tab">
               <h2>Affiliates & Partners Management</h2>
               <p style={{ color: '#666' }}>Add, edit, or remove affiliates and partners visible on the public Affiliates & Partners page.</p>
